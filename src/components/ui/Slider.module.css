@@ -1,0 +1,81 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.trackContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 24px;
+  cursor: pointer;
+}
+
+.track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--dsw-alias-border-l2, rgba(255, 255, 255, 0.1));
+  overflow: hidden;
+}
+
+.trackFill {
+  height: 100%;
+  background: var(--dsw-alias-brand-primary-new-colorprimary-new-color, var(--dsw-static-deepseek-500, #4176e6));
+  border-radius: 999px;
+  transition: width 60ms ease-out;
+}
+
+.nativeInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: grab;
+  margin: 0;
+  z-index: 2;
+}
+
+.nativeInput:active {
+  cursor: grabbing;
+}
+
+.thumb {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--dsw-alias-brand-primary-new-colorprimary-new-color, var(--dsw-static-deepseek-500, #4176e6));
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  z-index: 1;
+}
+
+.trackContainer:hover .thumb {
+  transform: scale(1.18);
+  box-shadow: 0 0 0 4px rgba(65, 118, 230, 0.2), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.nativeInput:focus-visible ~ .thumb {
+  box-shadow: 0 0 0 4px rgba(65, 118, 230, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--dsw-alias-label-caption, #81858c);
+  font-family: var(--ds-font-family-code);
+}

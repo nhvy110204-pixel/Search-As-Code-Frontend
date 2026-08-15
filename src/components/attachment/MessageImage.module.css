@@ -1,0 +1,20 @@
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.thumb {
+  max-width: 240px;
+  max-height: 180px;
+  border-radius: 8px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  object-fit: cover;
+  cursor: zoom-in;
+  transition: transform var(--ds-transition-duration-fast) var(--ds-ease-in-out);
+}
+
+.thumb:hover {
+  transform: scale(1.02);
+}

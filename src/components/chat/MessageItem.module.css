@@ -1,0 +1,92 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+/* User Bubble (Right Aligned) */
+.userRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.userStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: min(640px, 85%);
+}
+
+.userBubble {
+  background: var(--dsw-specific-bubble);
+  border-radius: 20px;
+  padding: 10px 16px;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--dsw-alias-label-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: var(--dsw-shadow-lv1);
+}
+
+/* Assistant Bubble (Left Aligned) */
+.assistantRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.assistantHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.assistantAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--dsw-alias-brand-primary-new-colorprimary-new-color);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.assistantName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dsw-alias-label-primary);
+}
+
+.assistantBody {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-left: 36px;
+}
+
+.stepsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}

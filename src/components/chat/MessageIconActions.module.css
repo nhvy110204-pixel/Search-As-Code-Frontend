@@ -1,0 +1,48 @@
+.root {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  cursor: pointer;
+  transition: background var(--ds-transition-duration-fast) var(--ds-ease-in-out),
+              color var(--ds-transition-duration-fast) var(--ds-ease-in-out);
+}
+
+.button:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+.button[data-copied] {
+  color: var(--dsw-alias-state-success-primary);
+}
+
+.clock {
+  margin-left: 6px;
+  font-size: 11px;
+  color: var(--dsw-alias-label-caption);
+}
+
+.stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--dsw-alias-label-caption);
+}

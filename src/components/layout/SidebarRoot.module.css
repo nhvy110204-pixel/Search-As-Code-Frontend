@@ -1,0 +1,290 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 12px 10px 10px 10px;
+  background: var(--dsw-specific-sidebar-fill);
+  border-right: 1px solid var(--dsw-alias-border-l2);
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: width 0.2s var(--ds-ease-in-out);
+  overflow: hidden;
+  user-select: none;
+}
+
+.root[data-collapsed='true'] {
+  padding: 12px 6px;
+  align-items: center;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  min-height: 36px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--dsw-alias-label-primary);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.toggleBtn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+  transition: all var(--ds-transition-duration-fast) var(--ds-ease-in-out);
+}
+
+.toggleBtn:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+.actionRow {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.newChatBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  border: 1px dashed var(--dsw-alias-border-l3);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--ds-transition-duration-fast) var(--ds-ease-in-out);
+}
+
+.newChatBtn:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  border-color: var(--dsw-alias-brand-primary-new-colorprimary-new-color);
+  color: var(--dsw-alias-brand-primary-new-colorprimary-new-color);
+}
+
+.newChatBtnCollapsed {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px dashed var(--dsw-alias-border-l3);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-primary);
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.addWsBtn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+  transition: all var(--ds-transition-duration-fast) var(--ds-ease-in-out);
+}
+
+.addWsBtn:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-brand-primary-new-colorprimary-new-color);
+}
+
+.workspaceFilter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 8px;
+  padding-bottom: 2px;
+}
+
+.workspaceFilter::-webkit-scrollbar {
+  display: none;
+}
+
+.wsChip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 6px;
+  background: var(--dsw-alias-bg-layer-2);
+  font-size: 11.5px;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+
+.wsChip[data-active='true'] {
+  background: var(--dsw-alias-state-business-tertiary);
+  border-color: var(--dsw-alias-state-business-primary);
+  color: var(--dsw-alias-state-business-primary);
+  font-weight: 600;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--dsw-alias-bg-layer-1);
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.searchInput {
+  flex: 1 1 auto;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--dsw-alias-label-primary);
+  font-size: 12.5px;
+}
+
+.sectionHeader {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dsw-alias-label-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 10px 6px 4px 6px;
+}
+
+.sessionList {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sessionItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--ds-transition-duration-fast) var(--ds-ease-in-out);
+}
+
+.sessionItem:hover {
+  background: var(--dsw-specific-sidebar-nav-item-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+.sessionItem[data-active='true'] {
+  background: var(--dsw-specific-sidebar-nav-item-active);
+  color: var(--dsw-alias-label-primary);
+  font-weight: 500;
+}
+
+.sessionTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sessionActions {
+  display: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.sessionItem:hover .sessionActions,
+.sessionItem[data-active='true'] .sessionActions {
+  display: flex;
+}
+
+.actionBtn {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  cursor: pointer;
+}
+
+.actionBtn:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+.actionBtnDanger:hover {
+  background: var(--dsw-alias-interactive-bg-hover-danger);
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--dsw-alias-border-l1);
+  margin-top: 6px;
+}
+
+.settingsTriggerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--ds-transition-duration-fast) var(--ds-ease-in-out);
+}
+
+.settingsTriggerBtn:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}

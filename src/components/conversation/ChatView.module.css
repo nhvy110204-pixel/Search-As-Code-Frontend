@@ -1,0 +1,144 @@
+/* Chat flow: one 16px rhythm everywhere through the column gap. Input
+   padding cap rides the skeleton. Under
+   `[data-conversation-scroll]` the column host owns overflow and this view
+   is ordinary flow (see ConversationRoot active-phase rules). */
+
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px calc(var(--dsh-composer-side-clearance) + 16px) 24px;
+  scroll-behavior: auto;
+  scrollbar-gutter: stable;
+}
+
+.column {
+  max-width: var(--dsh-chat-content-width);
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.flowItem {
+  min-width: 0;
+}
+
+.activeAssistantTurn {
+  min-height: calc(100vh - 160px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.flowItem:empty {
+  display: none;
+}
+
+.callRow {
+  border-radius: 6px;
+}
+
+.turnStatus {
+  align-self: flex-start;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  font: var(--dsw-font-s-strong-14);
+  white-space: nowrap;
+  background: linear-gradient(
+    90deg,
+    var(--dsw-static-deepseek-500) 0%,
+    var(--dsw-static-deepseek-500) 40%,
+    var(--dsw-static-deepseek-200) 50%,
+    var(--dsw-static-deepseek-500) 60%,
+    var(--dsw-static-deepseek-500) 100%
+  );
+  background-position: 100% 0;
+  background-size: 250% 100%;
+  background-clip: text;
+  color: transparent;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: dsh-turn-status-shimmer 1.8s linear infinite;
+}
+
+.turnStatusClock {
+  margin-left: 8px;
+  font: var(--dsw-font-xs-13);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsw-alias-label-caption);
+  -webkit-text-fill-color: var(--dsw-alias-label-caption);
+}
+
+@keyframes dsh-turn-status-shimmer {
+  to {
+    background-position: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turnStatus {
+    background-position: 0 0;
+    background-size: 100% 100%;
+    animation: none;
+  }
+}
+
+.hint {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.openError {
+  color: var(--dsw-alias-state-error-primary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.toBottomSlot {
+  position: absolute;
+  right: max(20px, calc((100% - var(--dsh-chat-content-width)) / 2));
+  bottom: 16px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.toBottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 100px;
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-button-floating-fill);
+  box-shadow: var(--dsw-shadow-lv2);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all var(--ds-transition-duration-fast) var(--ds-ease-in-out);
+}
+
+.toBottom:hover {
+  background: var(--dsw-alias-button-floating-hover);
+  transform: translateY(-2px);
+}

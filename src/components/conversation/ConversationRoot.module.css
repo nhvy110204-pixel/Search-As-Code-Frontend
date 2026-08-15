@@ -1,0 +1,288 @@
+/* Conversation column skeleton: header (breadcrumb row only for subagents not fork + tabs) over the view
+   area, composer InputBar at the bottom. Column width/squeeze is layout's;
+   this fills its cell. Figma: Header 39:27730 (83px two-row), tabs 13px with
+   a 2px active bar. */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  background: var(--dsw-alias-bg-base);
+
+  /* Shared width axis for the whole column: one content width W
+     (--dsh-chat-content-width) for the transcript, the dock cards
+     (todo/goal/queue: card minus four insets, 4 x 8 = 32), and the takeover
+     cards (question/approval/plan review); the input card alone is W + 32px.
+     The relation also holds when a narrow viewport shrinks everything: the
+     chat scroller and the takeover frames pad clearance + 16px per side while
+     the input card clears the bare clearance, so the input card stays exactly
+     content + 32px at every width. Declared on the root because the
+     transcript and the composer seat are sibling subtrees. */
+  --dsh-chat-content-width: 748px;
+  --dsh-composer-card-max-width: calc(var(--dsh-chat-content-width) + 32px);
+  --dsh-composer-side-clearance: 16px;
+  --dsh-composer-dock-inset: 8px;
+}
+
+.header {
+  position: relative;
+  flex: none;
+  padding: 12px 28px 12px 20px;
+  border-bottom: 1px solid transparent;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+  left: 0;
+  z-index: 0;
+  height: 1px;
+  background: var(--dsw-alias-border-l2);
+  pointer-events: none;
+}
+
+.headerHidden {
+  display: none;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-height: 32px;
+}
+
+.titleCluster {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.crumbSeg {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.crumbSep {
+  color: var(--dsw-alias-label-caption);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.crumb {
+  max-width: 220px;
+  overflow: hidden;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-tertiary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.crumb:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.crumbCurrent {
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+  cursor: default;
+}
+
+.headerActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.headerUtilities {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.headerUtilities:empty {
+  display: none;
+}
+
+.sessionLogButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 20px;
+  cursor: pointer;
+  transition: all var(--ds-transition-duration-fast) var(--ds-ease-in-out);
+}
+
+.sessionLogButton:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+  border-color: var(--dsw-alias-border-l3);
+}
+
+.tabs {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 36px;
+  margin-top: 4px;
+  padding-left: 8px;
+}
+
+.tab {
+  position: relative;
+  padding: 0 0 11px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-tertiary);
+  cursor: pointer;
+}
+
+.tab::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+  left: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: transparent;
+}
+
+.tabActive {
+  color: var(--dsw-alias-state-business-primary);
+}
+
+.tabActive::after {
+  background: var(--dsw-alias-state-business-primary);
+}
+
+.viewArea {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.composerStack {
+  --dsh-composer-stack-gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dsh-composer-stack-gap);
+}
+
+.composerSeat {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  --dsh-composer-text-max-height: 336px;
+}
+
+.root[data-phase='active'] {
+  overflow: hidden;
+}
+
+.root[data-phase='active'] .header {
+  flex: none;
+}
+
+.scrollBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.root[data-phase='active'] .viewArea {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.root[data-phase='active'] .composerSeat {
+  position: relative;
+  flex: none;
+  z-index: 7;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--dsw-alias-bg-base) 0%, transparent) 0px,
+    var(--dsw-alias-bg-base) 36px
+  );
+}
+
+.composerHero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  gap: 4px;
+  padding-bottom: 32px;
+  width: min(calc(var(--dsh-composer-card-max-width) + 2 * var(--dsh-composer-side-clearance)), 100%);
+  z-index: 1;
+}
+
+.heroGlow {
+  position: absolute;
+  left: 50%;
+  bottom: 92px;
+  z-index: -1;
+  width: calc(100% * 1051 / 776);
+  aspect-ratio: 1051 / 468;
+  transform: translate(-50%, 50%);
+  pointer-events: none;
+}
+
+.heroWorkspaceRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  margin-top: 4px;
+  padding-left: 20px;
+}
+
+.root[data-phase='hero'] .scrollBody {
+  justify-content: center;
+  overflow-y: auto;
+}
+
+.root[data-phase='settling'] .composerSeat {
+  visibility: hidden;
+}

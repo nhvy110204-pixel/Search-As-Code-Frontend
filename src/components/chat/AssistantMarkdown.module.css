@@ -1,0 +1,29 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+  line-height: 26px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stopped {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+  margin-top: 6px;
+}
+
+.actions {
+  margin-top: 12px;
+  margin-left: -6px;
+}
