@@ -71,7 +71,7 @@ export function EmptyHero({ onOpenWorkspacePicker }: EmptyHeroProps) {
     },
     {
       id: 'manage-presets',
-      label: 'Quản lý cấu hình Agent...',
+      label: 'Manage Agent Presets...',
       icon: <Settings2 size={14} />,
     },
   ]

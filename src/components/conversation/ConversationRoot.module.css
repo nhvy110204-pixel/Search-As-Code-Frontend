@@ -236,15 +236,46 @@
   overflow: hidden;
 }
 
-.root[data-phase='active'] .composerSeat {
+.heroView {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 16px;
+}
+
+.composerSeat {
   position: relative;
   flex: none;
   z-index: 7;
+  padding-bottom: 12px;
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--dsw-alias-bg-base) 0%, transparent) 0px,
     var(--dsw-alias-bg-base) 36px
   );
+}
+
+.mobileMenuButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  cursor: pointer;
+  flex: none;
+  transition: background-color var(--ds-transition-duration-fast) var(--ds-ease-in-out);
+}
+
+.mobileMenuButton:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
 }
 
 .composerHero {
@@ -258,31 +289,41 @@
   z-index: 1;
 }
 
-.heroGlow {
-  position: absolute;
-  left: 50%;
-  bottom: 92px;
-  z-index: -1;
-  width: calc(100% * 1051 / 776);
-  aspect-ratio: 1051 / 468;
-  transform: translate(-50%, 50%);
-  pointer-events: none;
-}
-
-.heroWorkspaceRow {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  min-width: 0;
-  margin-top: 4px;
-  padding-left: 20px;
-}
-
 .root[data-phase='hero'] .scrollBody {
   justify-content: center;
   overflow-y: auto;
 }
 
-.root[data-phase='settling'] .composerSeat {
-  visibility: hidden;
+@media (max-width: 768px) {
+  .header {
+    padding: 10px 12px;
+  }
+
+  .crumbs {
+    max-width: 200px;
+  }
+
+  .sessionLogButton span {
+    display: none;
+  }
+
+  .sessionLogButton {
+    padding: 0 8px;
+    height: 26px;
+  }
+
+  .tabs {
+    gap: 20px;
+    padding-left: 0;
+  }
+
+  .composerHero {
+    padding: 0 12px 24px;
+    width: 100%;
+  }
+
+  .root[data-phase='hero'] .scrollBody {
+    justify-content: flex-start;
+    padding-top: 16px;
+  }
 }

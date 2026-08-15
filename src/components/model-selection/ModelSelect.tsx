@@ -17,9 +17,9 @@ export interface EffortLevel {
 }
 
 export const EFFORT_LEVELS: EffortLevel[] = [
-  { id: 'low', name: 'Thấp (Low)', description: 'Tối ưu tốc độ, suy nghĩ ngắn gọn cho câu hỏi đơn giản' },
-  { id: 'medium', name: 'Trung bình (Medium)', description: 'Cân bằng giữa tốc độ phản hồi và độ sâu lập luận' },
-  { id: 'high', name: 'Cao (High)', description: 'Suy nghĩ tối đa, phân tích sâu và lập luận logic toàn diện' },
+  { id: 'low', name: 'Low', description: 'Optimized speed for simple questions' },
+  { id: 'medium', name: 'Medium', description: 'Balanced response speed and reasoning depth' },
+  { id: 'high', name: 'High', description: 'Maximum reasoning and comprehensive logical analysis' },
 ]
 
 export interface ModelSelectProps {
@@ -136,7 +136,7 @@ export function ModelSelect({
                 className={css.cell}
                 onClick={() => setPane('model')}
               >
-                <span className={css.cellLabel}>Mô hình (Model)</span>
+                <span className={css.cellLabel}>Model</span>
                 <span className={css.cellValue}>{modelLabel}</span>
                 <IconChevronRightOutline14 className={css.cellChevron} />
               </button>
@@ -148,7 +148,7 @@ export function ModelSelect({
                   className={css.cell}
                   onClick={() => setPane('effort')}
                 >
-                  <span className={css.cellLabel}>Mức độ suy nghĩ (Effort)</span>
+                  <span className={css.cellLabel}>Reasoning Effort</span>
                   <span className={css.cellValue}>{currentEffortObj.name}</span>
                   <IconChevronRightOutline14 className={css.cellChevron} />
                 </button>
@@ -188,7 +188,7 @@ export function ModelSelect({
 
               {otherModels.length > 0 && (
                 <section className={css.group}>
-                  <div className={css.groupTitle}>Mô hình khác</div>
+                  <div className={css.groupTitle}>Other Models</div>
                   {otherModels.map((m) => {
                     const isSelected = m.id === selectedModelId
                     return (

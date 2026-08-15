@@ -8,7 +8,7 @@ export function AgentPresetLabel({
   presetName = 'Standard mode',
 }: AgentPresetLabelProps) {
   return (
-    <span className={css.label} title={`Chế độ hoạt động: ${presetName}`}>
+    <span className={css.label} title={`Active mode: ${presetName}`}>
       <span>{presetName}</span>
     </span>
   )

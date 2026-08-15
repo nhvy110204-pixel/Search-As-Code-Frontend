@@ -186,13 +186,13 @@ export function InputBar({
                 options={[
                   {
                     value: 'chat',
-                    label: 'Chế độ Thường (Normal)',
-                    description: 'Trò chuyện và phản hồi trực tiếp',
+                    label: 'Normal',
+                    description: 'Direct conversation & immediate response',
                   },
                   {
                     value: 'plan',
-                    label: 'Chế độ Kế hoạch (Plan Mode)',
-                    description: 'Tự động lập kế hoạch và duyệt trước khi thực thi',
+                    label: 'Plan Mode',
+                    description: 'Auto create and review action plan before execution',
                   },
                 ]}
                 onChange={(val) => {

@@ -16,7 +16,12 @@ import { ImageLightbox } from '@/components/attachment/ImageLightbox'
 import { AddWorkspaceModal } from '@/components/layout/AddWorkspaceModal'
 import css from './ConversationRoot.module.css'
 
-export function ConversationRoot() {
+export interface ConversationRootProps {
+  onOpenMobileSidebar?: () => void
+  isMobile?: boolean
+}
+
+export function ConversationRoot({ onOpenMobileSidebar, isMobile = false }: ConversationRootProps) {
   const {
     sessions,
     activeSessionId,
@@ -63,34 +68,52 @@ export function ConversationRoot() {
   return (
     <div className={css.root} data-phase={isHero ? 'hero' : 'active'}>
       {/* 1. Official Header */}
-      <header className={clsx(css.header, isHero && css.headerHidden)}>
-        {!isHero && (
+      <header className={clsx(css.header, isHero && !isMobile && css.headerHidden)}>
+        {(!isHero || isMobile) && (
           <div className={css.titleRow}>
             <div className={css.titleCluster}>
+              {isMobile && onOpenMobileSidebar && (
+                <button
+                  type="button"
+                  className={css.mobileMenuButton}
+                  onClick={onOpenMobileSidebar}
+                  aria-label="Mở danh sách phiên"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                  </svg>
+                </button>
+              )}
               <nav className={css.crumbs} aria-label="Session title">
                 <span className={css.crumbCurrent}>
-                  {activeSession ? activeSession.title : 'Cuộc trò chuyện mới'}
+                  {activeSession && !isHero ? activeSession.title : 'Cuộc trò chuyện mới'}
                 </span>
               </nav>
 
-              <div className={css.headerActions}>
-                <AgentPresetLabel presetName={activePreset?.name || 'Standard mode'} />
-              </div>
+              {!isHero && (
+                <div className={css.headerActions}>
+                  <AgentPresetLabel presetName={activePreset?.name || 'Standard mode'} />
+                </div>
+              )}
             </div>
 
-            <div className={css.headerUtilities}>
-              <Tooltip label="Tải xuống toàn bộ nhật ký phiên (Session log)" delayMs={300}>
-                <button
-                  type="button"
-                  className={css.sessionLogButton}
-                  onClick={handleDownloadSessionLog}
-                  aria-label="Tải xuống nhật ký phiên"
-                >
-                  <span>Session log</span>
-                  <Download size={13} />
-                </button>
-              </Tooltip>
-            </div>
+            {!isHero && (
+              <div className={css.headerUtilities}>
+                <Tooltip label="Tải xuống toàn bộ nhật ký phiên (Session log)" delayMs={300}>
+                  <button
+                    type="button"
+                    className={css.sessionLogButton}
+                    onClick={handleDownloadSessionLog}
+                    aria-label="Tải xuống nhật ký phiên"
+                  >
+                    <span>Session log</span>
+                    <Download size={13} />
+                  </button>
+                </Tooltip>
+              </div>
+            )}
           </div>
         )}
       </header>
@@ -98,16 +121,35 @@ export function ConversationRoot() {
       {/* 2. Scroll Body & Views */}
       <div className={css.scrollBody}>
         {isHero ? (
-          <div className={css.composerHero}>
-            <EmptyHero onOpenWorkspacePicker={() => setIsAddWsOpen(true)} />
-            <InputBar
-              hero
-              isStreaming={isStreaming}
-              onSendMessage={sendMessage}
-              onStopStreaming={stopStreaming}
-            />
-          </div>
+          isMobile ? (
+            /* Mobile Hero Layout: EmptyHero centered in middle, InputBar fixed at bottom */
+            <>
+              <div className={css.heroView}>
+                <EmptyHero onOpenWorkspacePicker={() => setIsAddWsOpen(true)} />
+              </div>
+              <div className={css.composerSeat}>
+                <InputBar
+                  hero
+                  isStreaming={isStreaming}
+                  onSendMessage={sendMessage}
+                  onStopStreaming={stopStreaming}
+                />
+              </div>
+            </>
+          ) : (
+            /* Desktop Hero Layout: Original stacked hero (Headline + Chips + InputBar together) */
+            <div className={css.composerHero}>
+              <EmptyHero onOpenWorkspacePicker={() => setIsAddWsOpen(true)} />
+              <InputBar
+                hero
+                isStreaming={isStreaming}
+                onSendMessage={sendMessage}
+                onStopStreaming={stopStreaming}
+              />
+            </div>
+          )
         ) : (
+          /* Active Chat Layout (Desktop & Mobile): ChatView on top, InputBar at bottom */
           <>
             <div className={css.viewArea}>
               <ChatView

@@ -33,6 +33,14 @@
   white-space: nowrap;
 }
 
+@media (max-width: 640px) {
+  .triggerPill {
+    max-width: 110px;
+    padding: 0 4px 0 6px;
+    font-size: 12px;
+  }
+}
+
 .triggerPill:hover:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover);
   color: var(--dsw-alias-label-primary);

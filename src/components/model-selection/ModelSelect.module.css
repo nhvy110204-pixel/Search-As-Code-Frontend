@@ -26,6 +26,14 @@
   transition: background-color var(--ds-transition-duration-fast) var(--ds-ease-in-out);
 }
 
+@media (max-width: 640px) {
+  .trigger {
+    max-width: 120px;
+    padding: 0 4px 0 6px;
+    font-size: 12px;
+  }
+}
+
 .trigger:hover:not(:disabled) {
   background: var(--dsw-alias-interactive-bg-hover);
 }

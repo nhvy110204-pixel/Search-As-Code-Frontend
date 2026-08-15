@@ -189,3 +189,38 @@
   opacity: 0.4;
   cursor: default;
 }
+
+@media (max-width: 640px) {
+  .root {
+    padding: 0 8px 4px;
+  }
+
+  .card {
+    border-radius: 18px;
+    gap: 8px;
+  }
+
+  .input {
+    padding: 2px 12px 0 12px;
+    font-size: 14px;
+  }
+
+  .row {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 8px 8px 8px;
+  }
+
+  .tools {
+    gap: 8px;
+  }
+
+  .modes {
+    gap: 6px;
+  }
+
+  .trailing {
+    margin-left: auto;
+    gap: 6px;
+  }
+}

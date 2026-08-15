@@ -22,6 +22,12 @@
   overflow: visible;
 }
 
+@media (max-width: 640px) {
+  .stack {
+    gap: 20px;
+  }
+}
+
 /* figma 34:10411: fish + title, gap 10, centered; 26/32 wt500. The preview
    badge is a product addition outside that source: a mono superscript pill
    riding the title's top-right. */
@@ -35,6 +41,41 @@
   line-height: 32px;
   font-weight: 500;
   color: var(--dsw-alias-label-primary);
+}
+
+@media (max-width: 640px) {
+  .headline {
+    grid-template-columns: 28px auto auto;
+    column-gap: 8px;
+    font-size: 19px;
+    line-height: 26px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .headline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 17px;
+    line-height: 24px;
+    text-align: center;
+  }
+
+  .previewBadge {
+    grid-row: auto;
+    grid-column: auto;
+    margin-top: 0;
+    margin-left: 0;
+  }
+
+  .fishHitbox {
+    grid-row: auto;
+    grid-column: auto;
+  }
 }
 
 .headlineText {
@@ -122,6 +163,14 @@
   min-width: 0;
   padding-left: 8px;
   flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .body > .workspaceRow {
+    padding-left: 0;
+    justify-content: center;
+    gap: 6px;
+  }
 }
 
 /* Folder + label + chevron — transparent at rest; fill only on hover / open. */
