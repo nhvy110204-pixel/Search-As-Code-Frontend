@@ -1,5 +1,7 @@
-import { ThumbsUp, ThumbsDown } from 'lucide-react'
-import { Tooltip } from '@/components/ui/Tooltip'
+import {
+  IconLikeOutline16, IconLikeFill16, IconDislikeOutline16, IconDislikeFill16,
+  Tooltip
+} from '@/components/ui'
 import css from './MessageFeedbackActions.module.css'
 
 export interface MessageFeedbackActionsProps {
@@ -18,7 +20,7 @@ export function MessageFeedbackActions({ feedback, onFeedback }: MessageFeedback
           onClick={() => onFeedback(feedback === 'like' ? null : 'like')}
           aria-label="Thích"
         >
-          <ThumbsUp size={14} />
+          {feedback === 'like' ? <IconLikeFill16 size={14} /> : <IconLikeOutline16 size={14} />}
         </button>
       </Tooltip>
       <Tooltip label="Chưa hài lòng">
@@ -29,7 +31,7 @@ export function MessageFeedbackActions({ feedback, onFeedback }: MessageFeedback
           onClick={() => onFeedback(feedback === 'dislike' ? null : 'dislike')}
           aria-label="Không thích"
         >
-          <ThumbsDown size={14} />
+          {feedback === 'dislike' ? <IconDislikeFill16 size={14} /> : <IconDislikeOutline16 size={14} />}
         </button>
       </Tooltip>
     </div>

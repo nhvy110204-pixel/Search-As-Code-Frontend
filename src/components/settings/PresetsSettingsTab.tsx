@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { Plus, Trash2, Check } from 'lucide-react'
 import { useSettingsStore } from '@/store/useSettingsStore'
-import { Button } from '@/components/ui/Button'
+import { Button, IconPlusOutline16, IconTrashOutline16, IconCheckOutline16 } from '@/components/ui'
 import type { AgentPreset } from '@/types/chat'
 import css from './SettingsModal.module.css'
 
@@ -35,7 +34,7 @@ export function PresetsSettingsTab() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <label className={css.label}>Danh sách Vai trò AI (Agent Presets)</label>
           <Button variant="ghost" onClick={() => setIsAdding((v) => !v)}>
-            <Plus size={14} style={{ marginRight: 4 }} />
+            <IconPlusOutline16 size={14} style={{ marginRight: 4 }} />
             {isAdding ? 'Đóng form' : 'Tạo mới'}
           </Button>
         </div>
@@ -78,7 +77,7 @@ export function PresetsSettingsTab() {
                 className={css.rowBetween}
                 style={{
                   cursor: 'pointer',
-                  borderColor: isSelected ? 'var(--dsw-alias-brand-primary-new-colorprimary-new-color)' : undefined,
+                  borderColor: isSelected ? 'var(--dsw-alias-brand-primary)' : undefined,
                   background: isSelected ? 'var(--dsw-alias-state-business-tertiary)' : undefined,
                 }}
                 onClick={() => setSelectedPreset(preset.id)}
@@ -86,20 +85,21 @@ export function PresetsSettingsTab() {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span className={css.label}>{preset.name}</span>
-                    {isSelected && <Check size={14} style={{ color: 'var(--dsw-alias-brand-primary-new-colorprimary-new-color)' }} />}
+                    {isSelected && <IconCheckOutline16 size={14} style={{ color: 'var(--dsw-alias-brand-primary)' }} />}
                   </div>
                   <div className={css.description}>{preset.description}</div>
                 </div>
                 {preset.id.startsWith('preset-') && (
                   <button
                     type="button"
-                    style={{ border: 'none', background: 'transparent', color: 'var(--dsw-alias-label-tertiary)', cursor: 'pointer' }}
+                    style={{ border: 'none', background: 'transparent', color: 'var(--dsw-alias-state-error-primary)', cursor: 'pointer' }}
                     onClick={(e) => {
                       e.stopPropagation()
                       deletePreset(preset.id)
                     }}
+                    title="Xóa vai trò"
                   >
-                    <Trash2 size={14} />
+                    <IconTrashOutline16 size={14} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />
                   </button>
                 )}
               </div>

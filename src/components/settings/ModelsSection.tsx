@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Eye, EyeOff, Check, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import {
   IconPlusOutline16,
   IconTrashOutline16,
@@ -160,7 +160,7 @@ export function ModelsSection() {
                       title="Xóa nhà cung cấp"
                       onClick={() => handleDeleteProvider(p.id)}
                     >
-                      <IconTrashOutline16 size={14} />
+                      <IconTrashOutline16 size={14} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />
                     </button>
                   )}
                 </div>

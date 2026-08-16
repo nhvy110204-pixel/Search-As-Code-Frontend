@@ -206,7 +206,22 @@
 
 .folder {
   flex: none;
-  color: var(--dsw-alias-label-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dsw-alias-brand-primary);
+}
+
+.folder .iconOpen {
+  display: none;
+}
+
+.workspace:hover .folder .iconClosed {
+  display: none;
+}
+
+.workspace:hover .folder .iconOpen {
+  display: inline-flex;
 }
 
 .workspaceLabel {

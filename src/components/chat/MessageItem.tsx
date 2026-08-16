@@ -1,5 +1,8 @@
 import { memo } from 'react'
-import { Sparkles, Terminal, FileCode, Search, Globe } from 'lucide-react'
+import {
+  IconSparkle16, IconCodeOutline16,
+  DisclosureRow, TerminalBlock, DiffBlock, SearchBlock, WebBlock, ReadBlock
+} from '@/components/ui'
 import type { ChatMessage, ToolStep } from '@/types/chat'
 import { ReasoningRow } from './ReasoningRow'
 import { AssistantMarkdown } from './AssistantMarkdown'
@@ -7,12 +10,6 @@ import { MessageIconActions } from './MessageIconActions'
 import { MessageFeedbackActions } from '@/components/feedback/MessageFeedbackActions'
 import { ProducedFiles } from '@/components/deliverables/ProducedFiles'
 import { MessageImage } from '@/components/attachment/MessageImage'
-import { DisclosureRow } from '@/components/ui/DisclosureRow'
-import { TerminalBlock } from '@/components/ui/TerminalBlock'
-import { DiffBlock } from '@/components/ui/DiffBlock'
-import { SearchBlock } from '@/components/ui/SearchBlock'
-import { WebBlock } from '@/components/ui/WebBlock'
-import { ReadBlock } from '@/components/ui/ReadBlock'
 import css from './MessageItem.module.css'
 
 export interface MessageItemProps {
@@ -74,7 +71,7 @@ function renderStepBlock(step: ToolStep) {
       return (
         <DisclosureRow
           key={step.id}
-          icon={<Terminal size={14} />}
+          icon={<IconCodeOutline16 size={14} />}
           title={step.title}
           open={false}
           expandable
@@ -113,7 +110,7 @@ export const MessageItem = memo(function MessageItem({
       <div className={css.assistantRow}>
         <div className={css.assistantHeader}>
           <div className={css.assistantAvatar}>
-            <Sparkles size={16} />
+            <IconSparkle16 size={16} />
           </div>
           <span className={css.assistantName}>Trợ lý AI</span>
         </div>

@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import {
-  Plus, PanelLeft, Search, Trash2, Edit2, MessageSquare,
-  Moon, Sun, Settings, FolderPlus, GitFork, Archive, Folder
-} from 'lucide-react'
+  IconPlusOutline16, IconPanelLeftOutline16, IconSearchOutline16,
+  IconTrashOutline16, IconEditOutline16, IconQueueOutline14,
+  IconDarkOutline16, IconLightOutline16, IconSettingsOutline16,
+  IconProjectAddOutline16, IconBranchOutline16, IconArchiveOutline20,
+  IconFolderClose16, FishLogo, Tooltip
+} from '@/components/ui'
 import { useChatStore } from '@/store/useChatStore'
 import { useThemeStore } from '@/store/useThemeStore'
 import { useSettingsStore } from '@/store/useSettingsStore'
-import { FishLogo } from '@/components/ui/FishLogo'
-import { Tooltip } from '@/components/ui/Tooltip'
 import { AddWorkspaceModal } from './AddWorkspaceModal'
 import css from './SidebarRoot.module.css'
 
@@ -66,7 +67,7 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
       <aside className={css.root} data-collapsed="true" style={{ width: 56 }}>
         <Tooltip label="Mở rộng Sidebar" delayMs={300}>
           <button type="button" className={css.toggleBtn} onClick={onToggleCollapse} aria-label="Mở sidebar">
-            <PanelLeft size={18} />
+            <IconPanelLeftOutline16 size={18} />
           </button>
         </Tooltip>
 
@@ -77,7 +78,7 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
             onClick={() => newSession(activeWorkspaceId)}
             aria-label="Cuộc trò chuyện mới"
           >
-            <Plus size={18} />
+            <IconPlusOutline16 size={18} />
           </button>
         </Tooltip>
 
@@ -88,20 +89,20 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
             onClick={() => setIsAddWsOpen(true)}
             aria-label="Thêm Workspace"
           >
-            <FolderPlus size={18} />
+            <IconProjectAddOutline16 size={18} />
           </button>
         </Tooltip>
 
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
           <Tooltip label="Cài đặt hệ thống" delayMs={300}>
             <button type="button" className={css.toggleBtn} onClick={() => openSettings('general')} aria-label="Cài đặt">
-              <Settings size={18} />
+              <IconSettingsOutline16 size={18} />
             </button>
           </Tooltip>
 
           <Tooltip label={isDark ? 'Giao diện Sáng' : 'Giao diện Tối'} delayMs={300}>
             <button type="button" className={css.toggleBtn} onClick={toggleTheme} aria-label="Đổi theme">
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+              {isDark ? <IconLightOutline16 size={18} /> : <IconDarkOutline16 size={18} />}
             </button>
           </Tooltip>
         </div>
@@ -121,7 +122,7 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
         </button>
         <Tooltip label="Thu gọn Sidebar" delayMs={300}>
           <button type="button" className={css.toggleBtn} onClick={onToggleCollapse} aria-label="Thu gọn sidebar">
-            <PanelLeft size={18} />
+            <IconPanelLeftOutline16 size={18} />
           </button>
         </Tooltip>
       </div>
@@ -129,13 +130,13 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
       {/* 2. Action Buttons (New Chat + Add Workspace) */}
       <div className={css.actionRow}>
         <button type="button" className={css.newChatBtn} onClick={() => newSession(activeWorkspaceId)}>
-          <Plus size={15} />
+          <IconPlusOutline16 size={15} />
           <span>Cuộc trò chuyện mới</span>
         </button>
 
         <Tooltip label="Thêm Workspace mới" delayMs={300}>
           <button type="button" className={css.addWsBtn} onClick={() => setIsAddWsOpen(true)} aria-label="Thêm Workspace">
-            <FolderPlus size={16} />
+            <IconProjectAddOutline16 size={16} />
           </button>
         </Tooltip>
       </div>
@@ -159,7 +160,7 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
               data-active={activeWorkspaceId === ws.id}
               onClick={() => setActiveWorkspace(ws.id)}
             >
-              <Folder size={11} />
+              <IconFolderClose16 size={11} />
               <span>{ws.name}</span>
             </button>
           ))}
@@ -168,7 +169,7 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
 
       {/* 4. Search Filter */}
       <div className={css.searchBox}>
-        <Search size={14} />
+        <IconSearchOutline16 size={14} />
         <input
           type="text"
           className={css.searchInput}
@@ -192,7 +193,7 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
               data-active={isActive}
               onClick={() => selectSession(session.id)}
             >
-              <MessageSquare size={14} style={{ flexShrink: 0, opacity: 0.7, marginRight: 8 }} />
+              <IconQueueOutline14 size={14} style={{ flexShrink: 0, opacity: 0.7, marginRight: 8 }} />
 
               {isEditing ? (
                 <input
@@ -220,7 +221,7 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
                     onClick={(e) => handleStartRename(session, e)}
                     aria-label="Đổi tên"
                   >
-                    <Edit2 size={12} />
+                    <IconEditOutline16 size={12} />
                   </button>
                 </Tooltip>
                 <Tooltip label="Tạo nhánh trò chuyện (Fork)" delayMs={400}>
@@ -233,7 +234,7 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
                     }}
                     aria-label="Fork"
                   >
-                    <GitFork size={12} />
+                    <IconBranchOutline16 size={12} />
                   </button>
                 </Tooltip>
                 <Tooltip label="Lưu trữ" delayMs={400}>
@@ -246,7 +247,7 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
                     }}
                     aria-label="Lưu trữ"
                   >
-                    <Archive size={12} />
+                    <IconArchiveOutline20 size={12} />
                   </button>
                 </Tooltip>
                 <Tooltip label="Xóa" delayMs={400}>
@@ -259,7 +260,7 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
                     }}
                     aria-label="Xóa"
                   >
-                    <Trash2 size={12} />
+                    <IconTrashOutline16 size={12} />
                   </button>
                 </Tooltip>
               </div>
@@ -278,7 +279,7 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
                 data-active={session.id === activeSessionId}
                 onClick={() => selectSession(session.id)}
               >
-                <Archive size={14} style={{ flexShrink: 0, opacity: 0.6, marginRight: 8 }} />
+                <IconArchiveOutline20 size={14} style={{ flexShrink: 0, opacity: 0.6, marginRight: 8 }} />
                 <span className={css.sessionTitle}>{session.title}</span>
                 <div className={css.sessionActions}>
                   <Tooltip label="Bỏ lưu trữ">
@@ -290,7 +291,7 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
                         archiveSession(session.id)
                       }}
                     >
-                      <Plus size={12} />
+                      <IconPlusOutline16 size={12} />
                     </button>
                   </Tooltip>
                 </div>
@@ -307,13 +308,13 @@ export function SidebarRoot({ collapsed, onToggleCollapse }: SidebarRootProps) {
           className={css.settingsTriggerBtn}
           onClick={() => openSettings('general')}
         >
-          <Settings size={16} />
+          <IconSettingsOutline16 size={16} />
           <span>Cài đặt</span>
         </button>
 
         <Tooltip label={isDark ? 'Giao diện Sáng' : 'Giao diện Tối'} delayMs={300}>
           <button type="button" className={css.toggleBtn} onClick={toggleTheme} aria-label="Đổi theme">
-            {isDark ? <Sun size={17} /> : <Moon size={17} />}
+            {isDark ? <IconLightOutline16 size={17} /> : <IconDarkOutline16 size={17} />}
           </button>
         </Tooltip>
       </div>

@@ -1,23 +1,27 @@
 import { useState, useRef, useEffect, type KeyboardEvent, type ChangeEvent } from 'react'
-import { ArrowUp, Square, Plus, Terminal, Sparkles, BookOpen, Bug, Search, FileText } from 'lucide-react'
 import type { AttachmentFile } from '@/types/chat'
 import { AttachmentRail } from '@/components/attachment/AttachmentRail'
 import { DropOverlay } from '@/components/attachment/DropOverlay'
 import { ModelSelect } from '@/components/model-selection/ModelSelect'
 import { ContextMeter } from './ContextMeter'
 import { PopupSelectView, type CommandItem } from '@/components/commands/PopupSelectView'
-import { Tooltip, SelectDropdown } from '@/components/ui'
+import {
+  Tooltip, SelectDropdown,
+  IconSendOutline16, IconStopFill16, IconPlusOutline16, IconSparkle16,
+  IconListPenOutline16, IconSearchOutline16, IconInspectOutline12,
+  IconBrowseOutline16, IconCodeOutline16,
+} from '@/components/ui'
 import { useChatStore } from '@/store/useChatStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import css from './InputBar.module.css'
 
 const SLASH_COMMANDS: CommandItem[] = [
-  { id: 'goal', label: '/goal', detail: 'Chạy tác vụ tự động dài hạn tới khi hoàn thành mục tiêu', icon: <Sparkles size={14} /> },
-  { id: 'plan', label: '/plan', detail: 'Lập kế hoạch hành động chi tiết trước khi thực hiện', icon: <FileText size={14} /> },
-  { id: 'browser', label: '/browser', detail: 'Duyệt web và trích xuất dữ liệu trang web', icon: <Search size={14} /> },
-  { id: 'debug', label: '/debug', detail: 'Chẩn đoán lỗi và gỡ lỗi mã nguồn', icon: <Bug size={14} /> },
-  { id: 'explain', label: '/explain', detail: 'Giải thích chi tiết kiến trúc hoặc chức năng', icon: <BookOpen size={14} /> },
-  { id: 'terminal', label: '/terminal', detail: 'Đề xuất lệnh bash / powershell an toàn', icon: <Terminal size={14} /> },
+  { id: 'goal', label: '/goal', detail: 'Chạy tác vụ tự động dài hạn tới khi hoàn thành mục tiêu', icon: <IconSparkle16 size={14} /> },
+  { id: 'plan', label: '/plan', detail: 'Lập kế hoạch hành động chi tiết trước khi thực hiện', icon: <IconListPenOutline16 size={14} /> },
+  { id: 'browser', label: '/browser', detail: 'Duyệt web và trích xuất dữ liệu trang web', icon: <IconSearchOutline16 size={14} /> },
+  { id: 'debug', label: '/debug', detail: 'Chẩn đoán lỗi và gỡ lỗi mã nguồn', icon: <IconInspectOutline12 size={14} /> },
+  { id: 'explain', label: '/explain', detail: 'Giải thích chi tiết kiến trúc hoặc chức năng', icon: <IconBrowseOutline16 size={14} /> },
+  { id: 'terminal', label: '/terminal', detail: 'Đề xuất lệnh bash / powershell an toàn', icon: <IconCodeOutline16 size={14} /> },
 ]
 
 export interface InputBarProps {
@@ -209,7 +213,7 @@ export function InputBar({
                 }}
                 aria-label="Đính kèm"
               >
-                <Plus size={16} />
+                <IconPlusOutline16 size={16} />
               </button>
             </Tooltip>
 
@@ -256,7 +260,7 @@ export function InputBar({
                   aria-label="Dừng"
                   style={{ background: 'var(--dsw-alias-button-info-fill)' }}
                 >
-                  <Square size={14} fill="currentColor" />
+                  <IconStopFill16 size={14} />
                 </button>
               </Tooltip>
             ) : (
@@ -268,7 +272,7 @@ export function InputBar({
                   onClick={handleSend}
                   aria-label="Gửi tin nhắn"
                 >
-                  <ArrowUp size={18} />
+                  <IconSendOutline16 size={18} />
                 </button>
               </Tooltip>
             )}

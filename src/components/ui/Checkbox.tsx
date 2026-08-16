@@ -1,6 +1,6 @@
 import { type ChangeEvent, type ReactNode } from 'react'
 import clsx from 'clsx'
-import { Check } from 'lucide-react'
+import { IconCheckOutline14 } from './icons'
 import css from './Checkbox.module.css'
 
 export interface CheckboxProps {
@@ -41,7 +41,7 @@ export function Checkbox({
         className={css.nativeInput}
       />
       <div className={clsx(css.box, checked && css.boxChecked)}>
-        {checked && <Check size={12} className={css.icon} />}
+        {checked && <IconCheckOutline14 size={12} className={css.icon} />}
       </div>
 
       {(label || description) && (

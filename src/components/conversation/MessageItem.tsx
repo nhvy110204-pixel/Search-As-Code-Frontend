@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Terminal } from 'lucide-react'
 import type { ChatMessage, ToolStep } from '@/types/chat'
 import { ReasoningRow } from './ReasoningRow'
 import { AssistantMarkdown } from '@/components/chat/AssistantMarkdown'
 import {
   TerminalBlock, DiffBlock, ReadBlock, SearchBlock, WebBlock, DisclosureRow,
+  IconCodeOutline16,
 } from '@/components/ui'
 import { MessageFeedbackActions } from '@/components/feedback/MessageFeedbackActions'
 import { ProducedFiles } from '@/components/deliverables/ProducedFiles'
@@ -72,7 +72,7 @@ function renderStepBlock(step: ToolStep) {
       return (
         <DisclosureRow
           key={step.id}
-          icon={<Terminal size={14} />}
+          icon={<IconCodeOutline16 size={14} />}
           title={step.title}
           open={false}
           expandable

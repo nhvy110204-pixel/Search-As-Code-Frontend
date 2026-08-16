@@ -1,18 +1,14 @@
 import { create } from 'zustand'
 import type { ChatMessage, ChatSession, ModelOption, AttachmentFile, WorkspaceFolder } from '@/types/chat'
-import { streamChatMessage } from '@/services/api'
+import { streamChatMessage, chatSessionApi, chatMessageApi } from '@/services/api'
 import { useAuthStore } from './useAuthStore'
+import { useProjectStore } from './useProjectStore'
 
 const DEFAULT_MODELS: ModelOption[] = [
   { id: 'deepseek-reasoner', name: 'DeepSeek-R1 (Reasoner)', provider: 'DeepSeek', description: 'Tư duy suy nghĩ từng bước chuyên sâu (CoT Reasoning)', reasoningEnabled: true },
   { id: 'deepseek-chat', name: 'DeepSeek-V3 (Chat)', provider: 'DeepSeek', description: 'Mô hình trò chuyện tốc độ cao, xử lý đa tác vụ mạnh mẽ' },
   { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet', provider: 'Anthropic', description: 'Mô hình suy luận kết hợp tác vụ lập trình cao cấp', reasoningEnabled: true },
   { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', description: 'Mô hình đa phương tiện toàn năng' },
-]
-
-const DEFAULT_WORKSPACES: WorkspaceFolder[] = [
-  { id: 'ws-default', name: 'Dự án Mặc định (Default)', path: '/workspace/default', createdAt: Date.now() },
-  { id: 'ws-backend', name: 'Backend Services', path: '/workspace/backend', createdAt: Date.now() - 86400000 },
 ]
 
 interface ChatStore {
@@ -28,14 +24,15 @@ interface ChatStore {
   abortController: AbortController | null
 
   // Actions
+  fetchSessionsForProject: (projectId: string) => Promise<void>
   sendMessage: (content: string, attachments?: AttachmentFile[]) => Promise<void>
   stopStreaming: () => void
-  newSession: (workspaceId?: string | null) => string
-  selectSession: (sessionId: string) => void
-  deleteSession: (sessionId: string) => void
+  newSession: (projectId?: string | null) => Promise<string>
+  selectSession: (sessionId: string) => Promise<void>
+  deleteSession: (sessionId: string) => Promise<void>
   forkSession: (sessionId: string) => string
   archiveSession: (sessionId: string) => void
-  updateSessionTitle: (sessionId: string, title: string) => void
+  updateSessionTitle: (sessionId: string, title: string) => Promise<void>
   setMessageFeedback: (messageId: string, feedback: 'like' | 'dislike' | null) => void
   setSelectedModel: (modelId: string, effort?: string) => void
   togglePlanMode: () => void
@@ -49,18 +46,6 @@ interface ChatStore {
 }
 
 const STORAGE_KEY = 'chatbot_sessions_data'
-const WS_STORAGE_KEY = 'chatbot_workspaces_data'
-
-function loadSavedWorkspaces(): WorkspaceFolder[] {
-  try {
-    const raw = localStorage.getItem(WS_STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed
-    }
-  } catch { }
-  return DEFAULT_WORKSPACES
-}
 
 function loadSavedSessions(): ChatSession[] {
   try {
@@ -75,8 +60,8 @@ function loadSavedSessions(): ChatSession[] {
   return [
     {
       id: initialId,
-      title: 'Chào mừng bạn đến với Chatbot AI',
-      workspaceId: 'ws-default',
+      title: 'Chào mừng bạn đến với RAGFlash AI',
+      projectId: null,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       modelId: 'deepseek-reasoner',
@@ -84,11 +69,11 @@ function loadSavedSessions(): ChatSession[] {
         {
           id: 'welcome-msg',
           role: 'assistant',
-          content: 'Xin chào! Tôi là trợ lý AI thông minh. Tôi hỗ trợ tư duy suy nghĩ từng bước (**Thinking CoT**), hiển thị các bước **Tool Steps**, và định dạng **Markdown/Toán học (KaTeX)**. Hãy đặt câu hỏi bất kỳ cho tôi nhé!',
-          reasoning: 'Hệ thống đã khởi động thành công. Sẵn sàng phục vụ người dùng với đầy đủ UI/UX cao cấp.',
+          content: 'Xin chào! Tôi là trợ lý AI RAGFlash. Tôi hỗ trợ truy vấn thông minh từ các tài liệu bạn nạp vào Dự án, tư duy suy nghĩ từng bước (**Thinking CoT**), hiển thị trích dẫn nguồn (**Citations**) và định dạng **Markdown/Toán học (KaTeX)**. Hãy chọn một Dự án và đặt câu hỏi cho tôi nhé!',
+          reasoning: 'Hệ thống RAGFlash đã sẵn sàng. Sẵn sàng phục vụ người dùng với đầy đủ UI/UX cao cấp.',
           isThinking: false,
           timestamp: Date.now(),
-          stats: { durationMs: 420, tokens: 68, tps: 160 },
+          stats: { durationMs: 380, tokens: 55, tps: 145 },
         },
       ],
     },
@@ -101,19 +86,12 @@ function saveSessions(sessions: ChatSession[]) {
   } catch { }
 }
 
-function saveWorkspaces(workspaces: WorkspaceFolder[]) {
-  try {
-    localStorage.setItem(WS_STORAGE_KEY, JSON.stringify(workspaces))
-  } catch { }
-}
-
 export const useChatStore = create<ChatStore>((set, get) => {
   const initialSessions = loadSavedSessions()
-  const initialWorkspaces = loadSavedWorkspaces()
 
   return {
     sessions: initialSessions,
-    workspaces: initialWorkspaces,
+    workspaces: [],
     activeSessionId: initialSessions[0]?.id || 'session-default',
     activeWorkspaceId: null,
     isStreaming: false,
@@ -128,13 +106,62 @@ export const useChatStore = create<ChatStore>((set, get) => {
       return sessions.find((s) => s.id === activeSessionId) || sessions[0]
     },
 
-    newSession: (workspaceId = null) => {
-      const newId = `session-${Date.now()}`
-      const wsId = workspaceId !== undefined ? workspaceId : get().activeWorkspaceId
+    fetchSessionsForProject: async (projectId: string) => {
+      if (!projectId) return
+      const { isAuthenticated } = useAuthStore.getState()
+      if (!isAuthenticated) return
+
+      try {
+        const res = await chatSessionApi.list(projectId, 1, 50)
+        const backendItems = res.items || []
+
+        const mapped: ChatSession[] = backendItems.map((b) => {
+          const existing = get().sessions.find((s) => s.id === b.id)
+          return {
+            id: b.id,
+            title: b.title || 'Cuộc trò chuyện mới',
+            projectId: b.project_id,
+            createdAt: new Date(b.created_at).getTime(),
+            updatedAt: new Date(b.updated_at).getTime(),
+            modelId: existing?.modelId || get().selectedModelId,
+            messages: existing?.messages || [],
+          }
+        })
+
+        // Merge with existing sessions outside this project
+        const otherSessions = get().sessions.filter((s) => s.projectId !== projectId)
+        const combined = [...mapped, ...otherSessions]
+        set({ sessions: combined })
+
+        // Auto active first session if activeSession is not in this project
+        const activeSess = combined.find((s) => s.id === get().activeSessionId)
+        if (!activeSess || activeSess.projectId !== projectId) {
+          if (mapped.length > 0) {
+            set({ activeSessionId: mapped[0].id })
+          }
+        }
+      } catch {
+        // Fallback to local sessions
+      }
+    },
+
+    newSession: async (projectId = null) => {
+      const targetProjectId = projectId || useProjectStore.getState().activeProjectId
+      const { isAuthenticated } = useAuthStore.getState()
+
+      let newId = `session-${Date.now()}`
+
+      if (isAuthenticated && targetProjectId) {
+        try {
+          const created = await chatSessionApi.create(targetProjectId, 'Cuộc trò chuyện mới')
+          newId = created.id
+        } catch { }
+      }
+
       const newSession: ChatSession = {
         id: newId,
         title: 'Cuộc trò chuyện mới',
-        workspaceId: wsId,
+        projectId: targetProjectId,
         createdAt: Date.now(),
         updatedAt: Date.now(),
         modelId: get().selectedModelId,
@@ -153,31 +180,60 @@ export const useChatStore = create<ChatStore>((set, get) => {
       return newId
     },
 
-    selectSession: (sessionId: string) => {
+    selectSession: async (sessionId: string) => {
       set({ activeSessionId: sessionId })
+
+      const active = get().sessions.find((s) => s.id === sessionId)
+      if (active && active.messages.length === 0 && useAuthStore.getState().isAuthenticated) {
+        try {
+          const res = await chatMessageApi.list(sessionId, 1, 100)
+          if (res.items && res.items.length > 0) {
+            const mappedMsgs: ChatMessage[] = res.items.map((m) => ({
+              id: m.id,
+              role: m.role as 'user' | 'assistant',
+              content: m.content,
+              reasoning: m.reasoning || undefined,
+              timestamp: new Date(m.created_at).getTime(),
+            }))
+
+            set((state) => ({
+              sessions: state.sessions.map((s) =>
+                s.id === sessionId ? { ...s, messages: mappedMsgs } : s
+              ),
+            }))
+          }
+        } catch { }
+      }
     },
 
-    deleteSession: (sessionId: string) => {
+    deleteSession: async (sessionId: string) => {
+      const { isAuthenticated } = useAuthStore.getState()
+      if (isAuthenticated) {
+        try {
+          await chatSessionApi.delete(sessionId)
+        } catch { }
+      }
+
       set((state) => {
         const nextSessions = state.sessions.filter((s) => s.id !== sessionId)
         const fallbackSessions = nextSessions.length > 0 ? nextSessions : loadSavedSessions()
         saveSessions(fallbackSessions)
         return {
           sessions: fallbackSessions,
-          activeSessionId: fallbackSessions[0].id,
+          activeSessionId: fallbackSessions[0]?.id || 'session-default',
         }
       })
     },
 
     forkSession: (sessionId: string) => {
       const source = get().sessions.find((s) => s.id === sessionId)
-      if (!source) return get().newSession()
+      if (!source) return get().newSession() as any
 
       const newId = `session-fork-${Date.now()}`
       const forkedSession: ChatSession = {
         id: newId,
         title: `Nhánh: ${source.title}`,
-        workspaceId: source.workspaceId,
+        projectId: source.projectId,
         createdAt: Date.now(),
         updatedAt: Date.now(),
         modelId: source.modelId,
@@ -206,7 +262,14 @@ export const useChatStore = create<ChatStore>((set, get) => {
       })
     },
 
-    updateSessionTitle: (sessionId: string, title: string) => {
+    updateSessionTitle: async (sessionId: string, title: string) => {
+      const { isAuthenticated } = useAuthStore.getState()
+      if (isAuthenticated) {
+        try {
+          await chatSessionApi.update(sessionId, title)
+        } catch { }
+      }
+
       set((state) => {
         const nextSessions = state.sessions.map((s) =>
           s.id === sessionId ? { ...s, title, updatedAt: Date.now() } : s
@@ -257,23 +320,14 @@ export const useChatStore = create<ChatStore>((set, get) => {
         path,
         createdAt: Date.now(),
       }
-      set((state) => {
-        const next = [...state.workspaces, newWs]
-        saveWorkspaces(next)
-        return { workspaces: next }
-      })
+      set((state) => ({ workspaces: [...state.workspaces, newWs] }))
       return newWs
     },
 
     deleteWorkspace: (id: string) => {
-      set((state) => {
-        const next = state.workspaces.filter((w) => w.id !== id)
-        saveWorkspaces(next)
-        return {
-          workspaces: next,
-          activeWorkspaceId: state.activeWorkspaceId === id ? null : state.activeWorkspaceId,
-        }
-      })
+      set((state) => ({
+        workspaces: state.workspaces.filter((w) => w.id !== id),
+      }))
     },
 
     setActiveWorkspace: (id: string | null) => {
@@ -298,7 +352,6 @@ export const useChatStore = create<ChatStore>((set, get) => {
       if (!content.trim() && (!attachments || attachments.length === 0)) return
       if (get().isStreaming) return
 
-      // Auth Guard Check: require authentication before sending message
       const authState = useAuthStore.getState()
       if (!authState.isAuthenticated) {
         authState.openLoginModal('login')
@@ -485,7 +538,8 @@ export const useChatStore = create<ChatStore>((set, get) => {
             })
           },
         },
-        controller.signal
+        controller.signal,
+        activeSession.id
       )
     },
   }

@@ -2,10 +2,12 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import clsx from 'clsx'
 import { SidebarRoot } from '@/components/sidebar/SidebarRoot'
 import { ConversationRoot } from '@/components/conversation/ConversationRoot'
+import { ProjectsRoot } from '@/components/projects/ProjectsRoot'
 import { SettingsRoot } from '@/components/settings/SettingsRoot'
 import { LoginModal } from '@/components/auth/LoginModal'
 import { UserProfileModal } from '@/components/auth/UserProfileModal'
 import { useAuthStore } from '@/store/useAuthStore'
+import { useViewStore } from '@/store/useViewStore'
 import css from './AppFrame.module.css'
 
 const SIDEBAR_AUTO_COLLAPSE = 1024
@@ -75,6 +77,7 @@ export function AppFrame() {
   }
 
   const { isAuthenticated } = useAuthStore()
+  const { currentView } = useViewStore()
 
   // Grid columns definition:
   // Unauthenticated: 1fr (no sidebar)
@@ -134,9 +137,13 @@ export function AppFrame() {
         />
       )}
 
-      {/* Main Conversation Center Column */}
+      {/* Main Center Column (Chat or Projects) */}
       <div className={css.centerCol}>
-        <ConversationRoot onOpenMobileSidebar={() => setMobileDrawerOpen(true)} isMobile={isMobile} />
+        {currentView === 'projects' ? (
+          <ProjectsRoot />
+        ) : (
+          <ConversationRoot onOpenMobileSidebar={() => setMobileDrawerOpen(true)} isMobile={isMobile} />
+        )}
       </div>
 
       {/* Settings Modal Layer */}

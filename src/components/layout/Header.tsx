@@ -1,8 +1,8 @@
-import { RotateCcw, Settings, Folder } from 'lucide-react'
 import { ModelSelect } from '@/components/interactive/ModelSelect'
 import { PlanModeControl } from '@/components/interactive/PlanModeControl'
-import { StateDot } from '@/components/ui/StateDot'
-import { Tooltip } from '@/components/ui/Tooltip'
+import {
+  StateDot, Tooltip, IconRefreshOutline16, IconSettingsOutline16, IconFolderClose16
+} from '@/components/ui'
 import { useChatStore } from '@/store/useChatStore'
 import { useSettingsStore } from '@/store/useSettingsStore'
 import css from './Header.module.css'
@@ -38,7 +38,7 @@ export function Header() {
 
         {activeWs && (
           <div className={css.wsBadge}>
-            <Folder size={12} />
+            <IconFolderClose16 size={12} />
             <span>{activeWs.name}</span>
           </div>
         )}
@@ -58,7 +58,7 @@ export function Header() {
               onClick={() => newSession(activeWorkspaceId)}
               aria-label="Làm mới hội thoại"
             >
-              <RotateCcw size={16} />
+              <IconRefreshOutline16 size={16} />
             </button>
           </Tooltip>
         )}
@@ -70,7 +70,7 @@ export function Header() {
             onClick={() => openSettings('general')}
             aria-label="Cài đặt"
           >
-            <Settings size={16} />
+            <IconSettingsOutline16 size={16} />
           </button>
         </Tooltip>
 

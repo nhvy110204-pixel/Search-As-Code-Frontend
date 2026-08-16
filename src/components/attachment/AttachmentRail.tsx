@@ -1,4 +1,4 @@
-import { X, FileText } from 'lucide-react'
+import { IconCloseOutline16, IconBrowseOutline16 } from '@/components/ui'
 import type { AttachmentFile } from '@/types/chat'
 import css from './AttachmentRail.module.css'
 
@@ -28,7 +28,7 @@ export function AttachmentRail({ items, onRemove, onPreview }: AttachmentRailPro
                   <img src={item.url} alt={item.name} />
                 ) : (
                   <div className={css.fileFallback}>
-                    <FileText size={18} />
+                    <IconBrowseOutline16 size={18} />
                     <span>{item.name.slice(0, 10)}</span>
                   </div>
                 )}
@@ -42,7 +42,7 @@ export function AttachmentRail({ items, onRemove, onPreview }: AttachmentRailPro
                 }}
                 aria-label="Xóa đính kèm"
               >
-                <X size={12} />
+                <IconCloseOutline16 size={12} />
               </button>
             </div>
           )

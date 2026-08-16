@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { IconCloseOutline16 } from '@/components/ui/icons'
+import { IconCloseOutline16, IconCheckOutline16 } from '@/components/ui'
 import { useAuthStore } from '@/store/useAuthStore'
-import { Check, Save, ShieldCheck } from 'lucide-react'
 import css from './UserProfileModal.module.css'
 
 export function UserProfileModal() {
@@ -107,7 +106,7 @@ export function UserProfileModal() {
                     {user.full_name || user.username}
                   </span>
                   <span className={css.badge}>
-                    <ShieldCheck size={12} style={{ display: 'inline', marginRight: 3, verticalAlign: -1 }} />
+                    <IconCheckOutline16 size={12} style={{ display: 'inline', marginRight: 3, verticalAlign: -1 }} />
                     {user.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </div>
@@ -193,7 +192,7 @@ export function UserProfileModal() {
           <div className={css.footer}>
             {saveSuccess && (
               <span className={css.successMsg}>
-                <Check size={14} style={{ display: 'inline', marginRight: 4, verticalAlign: -2 }} />
+                <IconCheckOutline16 size={14} style={{ display: 'inline', marginRight: 4, verticalAlign: -2 }} />
                 Đã lưu thay đổi thành công!
               </span>
             )}
@@ -209,7 +208,7 @@ export function UserProfileModal() {
               className={css.saveBtn}
               disabled={isLoading}
             >
-              <Save size={14} />
+              <IconCheckOutline16 size={14} />
               <span>{isLoading ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
             </button>
           </div>

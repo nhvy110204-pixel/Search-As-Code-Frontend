@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Sun, Moon, Contrast, Languages, Flag, Settings } from 'lucide-react'
+import { Languages, Flag } from 'lucide-react'
+import {
+  IconSettingsOutline16, IconLightOutline16, IconDarkOutline16, IconFollowsystemOutline16,
+  Tooltip
+} from '@/components/ui'
 import { useThemeStore } from '@/store/useThemeStore'
-import { Tooltip } from '@/components/ui/Tooltip'
 import css from './HeaderSettingsPopover.module.css'
 
 export function HeaderSettingsPopover() {
@@ -71,7 +74,7 @@ export function HeaderSettingsPopover() {
           aria-expanded={open}
           onClick={() => setOpen((prev) => !prev)}
         >
-          <Settings size={16} />
+          <IconSettingsOutline16 size={16} />
         </button>
       </Tooltip>
 
@@ -93,7 +96,7 @@ export function HeaderSettingsPopover() {
               title="Chủ đề Sáng (Light)"
               aria-label="Light mode"
             >
-              <Sun size={17} />
+              <IconLightOutline16 size={17} />
             </button>
 
             <button
@@ -104,7 +107,7 @@ export function HeaderSettingsPopover() {
               title="Chủ đề Tối (Dark)"
               aria-label="Dark mode"
             >
-              <Moon size={17} />
+              <IconDarkOutline16 size={17} />
             </button>
 
             <button
@@ -115,7 +118,7 @@ export function HeaderSettingsPopover() {
               title="Tự động theo Hệ thống (System)"
               aria-label="System mode"
             >
-              <Contrast size={17} />
+              <IconFollowsystemOutline16 size={17} />
             </button>
           </div>
 

@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import { Modal } from '@/components/ui/Modal'
 import { FishLogo } from '@/components/ui/FishLogo'
-import { IconCloseOutline16 } from '@/components/ui/icons'
+import { IconCloseOutline16, IconWarningOutline16, IconUserOutline16 } from '@/components/ui'
 import { useAuthStore } from '@/store/useAuthStore'
-import { Eye, EyeOff, AlertCircle, LogIn, UserPlus } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import css from './LoginModal.module.css'
 
 export function LoginModal() {
@@ -149,7 +149,7 @@ export function LoginModal() {
         <div className={css.body}>
           {(authError || regLocalError) && (
             <div className={css.errorBanner}>
-              <AlertCircle size={16} />
+              <IconWarningOutline16 size={16} />
               <span>{authError || regLocalError}</span>
             </div>
           )}
@@ -205,7 +205,7 @@ export function LoginModal() {
                   <div className={css.spinner} />
                 ) : (
                   <>
-                    <LogIn size={16} />
+                    <IconUserOutline16 size={16} />
                     <span>Đăng nhập</span>
                   </>
                 )}
@@ -293,7 +293,7 @@ export function LoginModal() {
                   <div className={css.spinner} />
                 ) : (
                   <>
-                    <UserPlus size={16} />
+                    <IconUserOutline16 size={16} />
                     <span>Tạo tài khoản</span>
                   </>
                 )}

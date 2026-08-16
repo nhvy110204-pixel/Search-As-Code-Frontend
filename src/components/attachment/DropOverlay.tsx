@@ -1,4 +1,4 @@
-import { UploadCloud } from 'lucide-react'
+import { IconDownloadOutline16 } from '@/components/ui'
 import css from './DropOverlay.module.css'
 
 export interface DropOverlayProps {
@@ -11,7 +11,7 @@ export function DropOverlay({ active, label = 'Thả tệp vào đây để tả
 
   return (
     <div className={css.overlay}>
-      <UploadCloud size={36} className={css.icon} />
+      <IconDownloadOutline16 size={36} className={css.icon} style={{ transform: 'rotate(180deg)' }} />
       <span className={css.text}>{label}</span>
     </div>
   )

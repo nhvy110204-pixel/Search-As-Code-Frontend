@@ -1,8 +1,12 @@
 import { useState } from 'react'
 import clsx from 'clsx'
-import { Download } from 'lucide-react'
-import { Tooltip, BrandWordmark, FishLogo } from '@/components/ui'
+import {
+  Tooltip, BrandWordmark, FishLogo,
+  IconFolderClose16, IconFolderOpen16, IconDownloadOutline16
+} from '@/components/ui'
 import { useChatStore } from '@/store/useChatStore'
+import { useProjectStore } from '@/store/useProjectStore'
+import { useViewStore } from '@/store/useViewStore'
 import { useSettingsStore } from '@/store/useSettingsStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { EmptyHero } from './EmptyHero'
@@ -32,6 +36,10 @@ export function ConversationRoot({ onOpenMobileSidebar, isMobile = false }: Conv
     stopStreaming,
     setMessageFeedback,
   } = useChatStore()
+  const { getActiveProject } = useProjectStore()
+  const { navigateToProjectDetail } = useViewStore()
+
+  const activeProject = getActiveProject()
 
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [isAddWsOpen, setIsAddWsOpen] = useState(false)
@@ -117,6 +125,23 @@ export function ConversationRoot({ onOpenMobileSidebar, isMobile = false }: Conv
                   </button>
                 )}
                 <nav className={css.crumbs} aria-label="Session title">
+                  {activeProject && (
+                    <Tooltip label="Quản lý tài liệu dự án" delayMs={400}>
+                      <button
+                        type="button"
+                        onClick={() => navigateToProjectDetail(activeProject.id, 'documents')}
+                        className={css.projectCrumbBtn}
+                        aria-label={`Dự án: ${activeProject.name}`}
+                      >
+                        <span className={css.folderSwap}>
+                          <IconFolderClose16 size={16} className={css.iconClosed} />
+                          <IconFolderOpen16 size={16} className={css.iconOpen} />
+                        </span>
+                        <span className={css.projectCrumbName}>{activeProject.name}</span>
+                        <span className={css.projectCrumbDivider}>/</span>
+                      </button>
+                    </Tooltip>
+                  )}
                   <span className={css.crumbCurrent}>
                     {activeSession && !isHero ? activeSession.title : 'Cuộc trò chuyện mới'}
                   </span>
@@ -140,7 +165,7 @@ export function ConversationRoot({ onOpenMobileSidebar, isMobile = false }: Conv
                       aria-label="Tải xuống nhật ký phiên"
                     >
                       <span>Session log</span>
-                      <Download size={13} />
+                      <IconDownloadOutline16 size={13} />
                     </button>
                   </Tooltip>
                 </div>

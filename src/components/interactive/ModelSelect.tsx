@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown, Sparkles, Check } from 'lucide-react'
+import { IconSparkle16, IconChevronDownOutline14, IconCheckOutline16 } from '@/components/ui'
 import type { ModelOption } from '@/types/chat'
 import css from './ModelSelect.module.css'
 
@@ -33,9 +33,9 @@ export function ModelSelect({ models, selectedModelId, onSelect }: ModelSelectPr
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
       >
-        <Sparkles size={14} style={{ color: 'var(--dsw-alias-brand-primary-new-colorprimary-new-color)' }} />
+        <IconSparkle16 size={14} style={{ color: 'var(--dsw-alias-brand-primary)' }} />
         <span>{currentModel?.name || 'Chọn mô hình'}</span>
-        <ChevronDown size={14} style={{ color: 'var(--dsw-alias-label-tertiary)' }} />
+        <IconChevronDownOutline14 size={14} style={{ color: 'var(--dsw-alias-label-tertiary)' }} />
       </button>
 
       {open && (
@@ -57,7 +57,7 @@ export function ModelSelect({ models, selectedModelId, onSelect }: ModelSelectPr
                   <span className={css.optionName}>{model.name}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     {model.reasoningEnabled && <span className={css.reasoningBadge}>CoT Thinking</span>}
-                    {isSelected && <Check size={14} style={{ color: 'var(--dsw-alias-brand-primary-new-colorprimary-new-color)' }} />}
+                    {isSelected && <IconCheckOutline16 size={14} style={{ color: 'var(--dsw-alias-brand-primary)' }} />}
                   </div>
                 </div>
                 {model.description && <span className={css.optionDesc}>{model.description}</span>}

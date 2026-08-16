@@ -1,5 +1,18 @@
-import type { ChatMessage, ToolStep, ProducedFile } from '@/types/chat'
+import type { ChatMessage, ToolStep, ProducedFile, BackendChatSession, BackendChatSessionListResponse, BackendChatMessage } from '@/types/chat'
 import type { UserProfile, TokenResponse, LoginCredentials, RegisterData, UserUpdateRequest } from '@/types/auth'
+import type {
+  ProjectResponse,
+  ProjectCreateRequest,
+  ProjectUpdateRequest,
+  ProjectListResponse,
+  DocumentResponse,
+  DocumentListResponse,
+  DocumentPreviewResponse,
+  DocumentChunkListResponse,
+  DocumentUploadResponse,
+  BatchUploadResponse,
+  IngestionTaskStatus,
+} from '@/types/project'
 import { useAuthStore } from '@/store/useAuthStore'
 
 export interface StreamCallbacks {
@@ -58,8 +71,11 @@ export async function fetchWithAuth(
   
   const token = useAuthStore.getState().accessToken
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(options.headers as Record<string, string> || {}),
+  }
+
+  if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json'
   }
 
   if (token) {
@@ -98,9 +114,6 @@ export async function fetchWithAuth(
 // -------------------------------------------------------------
 
 export const authApi = {
-  /**
-   * User Login (Email / Username + Password)
-   */
   async login(credentials: LoginCredentials): Promise<TokenResponse> {
     if (IS_MOCK) {
       await new Promise((r) => setTimeout(r, 600))
@@ -128,9 +141,6 @@ export const authApi = {
     }
   },
 
-  /**
-   * User Registration
-   */
   async register(data: RegisterData): Promise<UserProfile> {
     if (IS_MOCK) {
       await new Promise((r) => setTimeout(r, 700))
@@ -170,9 +180,6 @@ export const authApi = {
     }
   },
 
-  /**
-   * Refresh JWT Tokens
-   */
   async refresh(refreshToken: string): Promise<TokenResponse> {
     if (IS_MOCK) {
       await new Promise((r) => setTimeout(r, 400))
@@ -197,9 +204,6 @@ export const authApi = {
     }
   },
 
-  /**
-   * Get Current Authenticated User Profile
-   */
   async getMe(): Promise<UserProfile> {
     if (IS_MOCK) {
       const current = useAuthStore.getState().user
@@ -216,9 +220,6 @@ export const authApi = {
 }
 
 export const userApi = {
-  /**
-   * Update User Profile
-   */
   async updateProfile(userId: string, data: UserUpdateRequest): Promise<UserProfile> {
     if (IS_MOCK) {
       await new Promise((r) => setTimeout(r, 500))
@@ -248,6 +249,286 @@ export const userApi = {
 }
 
 // -------------------------------------------------------------
+// Projects API
+// -------------------------------------------------------------
+
+export const projectApi = {
+  async list(page = 1, pageSize = 50, name?: string): Promise<ProjectListResponse> {
+    const params = new URLSearchParams({
+      page: String(page),
+      page_size: String(pageSize),
+    })
+    if (name) params.append('name', name)
+
+    const response = await fetchWithAuth(`/projects/?${params.toString()}`)
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Không thể tải danh sách dự án'))
+    }
+    return response.json()
+  },
+
+  async get(id: string): Promise<ProjectResponse> {
+    const response = await fetchWithAuth(`/projects/${id}`)
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Không thể tải thông tin dự án'))
+    }
+    return response.json()
+  },
+
+  async create(data: ProjectCreateRequest): Promise<ProjectResponse> {
+    const response = await fetchWithAuth('/projects/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Tạo dự án thất bại'))
+    }
+    return response.json()
+  },
+
+  async update(id: string, data: ProjectUpdateRequest): Promise<ProjectResponse> {
+    const response = await fetchWithAuth(`/projects/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Cập nhật dự án thất bại'))
+    }
+    return response.json()
+  },
+
+  async delete(id: string): Promise<void> {
+    const response = await fetchWithAuth(`/projects/${id}`, {
+      method: 'DELETE',
+    })
+    if (!response.ok && response.status !== 204) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Xóa dự án thất bại'))
+    }
+  },
+}
+
+// -------------------------------------------------------------
+// Documents & Ingestion API
+// -------------------------------------------------------------
+
+export const documentApi = {
+  async list(projectId?: string, page = 1, pageSize = 50, fileName?: string): Promise<DocumentListResponse> {
+    const params = new URLSearchParams({
+      page: String(page),
+      page_size: String(pageSize),
+    })
+    if (projectId) params.append('project_id', projectId)
+    if (fileName) params.append('file_name', fileName)
+
+    const response = await fetchWithAuth(`/documents/?${params.toString()}`)
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Không thể tải danh sách tài liệu'))
+    }
+    return response.json()
+  },
+
+  async get(id: string): Promise<DocumentResponse> {
+    const response = await fetchWithAuth(`/documents/${id}`)
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Không thể lấy thông tin tài liệu'))
+    }
+    return response.json()
+  },
+
+  async getPreview(id: string): Promise<DocumentPreviewResponse> {
+    const response = await fetchWithAuth(`/documents/${id}/preview`)
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Không thể xem trước nội dung tài liệu'))
+    }
+    return response.json()
+  },
+
+  async checkFilename(filename: string, projectId?: string): Promise<{ exists: boolean }> {
+    const params = new URLSearchParams({ filename })
+    if (projectId) params.append('project_id', projectId)
+
+    const response = await fetchWithAuth(`/documents/check-filename?${params.toString()}`)
+    if (!response.ok) {
+      return { exists: false }
+    }
+    return response.json()
+  },
+
+  async listChunks(documentId: string, page = 1, pageSize = 50): Promise<DocumentChunkListResponse> {
+    const params = new URLSearchParams({
+      document_id: documentId,
+      page: String(page),
+      page_size: String(pageSize),
+    })
+    const response = await fetchWithAuth(`/document-chunks/?${params.toString()}`)
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Không thể tải danh sách chunks'))
+    }
+    return response.json()
+  },
+
+  async delete(id: string): Promise<void> {
+    const response = await fetchWithAuth(`/documents/${id}`, {
+      method: 'DELETE',
+    })
+    if (!response.ok && response.status !== 204) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Xóa tài liệu thất bại'))
+    }
+  },
+}
+
+export const ingestionApi = {
+  async upload(projectId: string, file: File, description?: string): Promise<DocumentUploadResponse> {
+    const formData = new FormData()
+    formData.append('project_id', projectId)
+    formData.append('file', file)
+    if (description) formData.append('description', description)
+
+    const response = await fetchWithAuth('/ingestion/upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, `Upload file ${file.name} thất bại`))
+    }
+
+    const json = await response.json()
+    return json.data
+  },
+
+  async uploadBatch(projectId: string, files: File[]): Promise<BatchUploadResponse> {
+    const formData = new FormData()
+    formData.append('project_id', projectId)
+    for (const f of files) {
+      formData.append('files', f)
+    }
+
+    const response = await fetchWithAuth('/ingestion/upload-batch', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Upload hàng loạt thất bại'))
+    }
+
+    return response.json()
+  },
+
+  async getStatus(taskId: string): Promise<IngestionTaskStatus> {
+    const response = await fetchWithAuth(`/ingestion/status/${taskId}`)
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Không thể kiểm tra trạng thái ingestion'))
+    }
+    const json = await response.json()
+    return json.data
+  },
+
+  async cancelTask(taskId: string): Promise<void> {
+    await fetchWithAuth(`/ingestion/cancel/${taskId}`, {
+      method: 'POST',
+    })
+  },
+}
+
+// -------------------------------------------------------------
+// Chat Sessions & Messages API
+// -------------------------------------------------------------
+
+export const chatSessionApi = {
+  async list(projectId?: string, page = 1, pageSize = 50): Promise<BackendChatSessionListResponse> {
+    const params = new URLSearchParams({
+      page: String(page),
+      page_size: String(pageSize),
+    })
+    if (projectId) params.append('project_id', projectId)
+
+    const response = await fetchWithAuth(`/chat-sessions/?${params.toString()}`)
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Không thể tải danh sách phiên trò chuyện'))
+    }
+    return response.json()
+  },
+
+  async get(id: string): Promise<BackendChatSession> {
+    const response = await fetchWithAuth(`/chat-sessions/${id}`)
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Không thể tải phiên trò chuyện'))
+    }
+    return response.json()
+  },
+
+  async create(projectId: string, title?: string): Promise<BackendChatSession> {
+    const response = await fetchWithAuth('/chat-sessions/', {
+      method: 'POST',
+      body: JSON.stringify({
+        project_id: projectId,
+        title: title || 'Cuộc trò chuyện mới',
+      }),
+    })
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Tạo phiên trò chuyện thất bại'))
+    }
+    return response.json()
+  },
+
+  async update(id: string, title: string): Promise<BackendChatSession> {
+    const response = await fetchWithAuth(`/chat-sessions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ title }),
+    })
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Đổi tên phiên trò chuyện thất bại'))
+    }
+    return response.json()
+  },
+
+  async delete(id: string): Promise<void> {
+    const response = await fetchWithAuth(`/chat-sessions/${id}`, {
+      method: 'DELETE',
+    })
+    if (!response.ok && response.status !== 204) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Xóa phiên trò chuyện thất bại'))
+    }
+  },
+}
+
+export const chatMessageApi = {
+  async list(sessionId: string, page = 1, pageSize = 100): Promise<{ items: BackendChatMessage[]; total: number }> {
+    const params = new URLSearchParams({
+      session_id: sessionId,
+      page: String(page),
+      page_size: String(pageSize),
+    })
+    const response = await fetchWithAuth(`/chat-messages/?${params.toString()}`)
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Không thể tải lịch sử tin nhắn'))
+    }
+    return response.json()
+  },
+}
+
+// -------------------------------------------------------------
 // Chat Streaming API
 // -------------------------------------------------------------
 
@@ -258,7 +539,8 @@ export async function streamChatMessage(
   messages: ChatMessage[],
   modelId: string,
   callbacks: StreamCallbacks,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  sessionId?: string
 ): Promise<void> {
   if (IS_MOCK) {
     return runMockStreamingEngine(messages, modelId, callbacks, signal)
@@ -274,14 +556,15 @@ export async function streamChatMessage(
     }
 
     const lastMessage = messages[messages.length - 1]?.content || ''
+    const targetSessionId = sessionId || '00000000-0000-0000-0000-000000000000'
+
     const response = await fetch(`${API_V1_URL}/chat/stream`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        session_id: '00000000-0000-0000-0000-000000000000',
+        session_id: targetSessionId,
         message: lastMessage,
-        model: modelId,
-        stream: true,
+        client_request_id: `req-${Date.now()}`,
       }),
       signal,
     })
@@ -291,7 +574,8 @@ export async function streamChatMessage(
         useAuthStore.getState().openLoginModal()
         throw new Error('Vui lòng đăng nhập để gửi tin nhắn')
       }
-      throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, `Lỗi gửi tin nhắn (${response.status})`))
     }
 
     if (!response.body) {
@@ -325,13 +609,12 @@ export async function streamChatMessage(
           try {
             const data = JSON.parse(dataStr)
             
-            // DeepSeek format / OpenAI reasoning format
+            // Server-Sent Events from SaC / LangGraph or OpenAI provider
             if (data.choices?.[0]?.delta?.reasoning_content) {
               callbacks.onThinkingChunk?.(data.choices[0].delta.reasoning_content)
             } else if (data.choices?.[0]?.delta?.content) {
               const contentDelta: string = data.choices[0].delta.content
               
-              // Handle <think> tags if model emits them in content
               if (contentDelta.includes('<think>')) {
                 inThinkTag = true
                 const parts = contentDelta.split('<think>')
@@ -348,9 +631,14 @@ export async function streamChatMessage(
               } else {
                 callbacks.onContentChunk?.(contentDelta)
               }
+            } else if (data.event === 'step' || data.type === 'step') {
+              callbacks.onStepUpdate?.(data.data || data)
+            } else if (data.event === 'thinking') {
+              callbacks.onThinkingChunk?.(data.content || '')
+            } else if (data.event === 'content' || data.content) {
+              callbacks.onContentChunk?.(data.content)
             }
           } catch {
-            // plain text fallback
             callbacks.onContentChunk?.(dataStr)
           }
         }
@@ -387,15 +675,12 @@ function createMockTokenResponse(identifier: string): TokenResponse {
     access_token: `mock_jwt_access_${Date.now()}_${Math.random().toString(36).slice(2)}`,
     refresh_token: `mock_jwt_refresh_${Date.now()}_${Math.random().toString(36).slice(2)}`,
     token_type: 'bearer',
-    expires_in_seconds: 604800, // 7 days
-    refresh_expires_in_seconds: 2419200, // 28 days
+    expires_in_seconds: 604800,
+    refresh_expires_in_seconds: 2419200,
     user: createMockUserProfile(identifier),
   }
 }
 
-/**
- * Realistic Mock Engine for demonstration and testing of Thinking + Markdown + Steps
- */
 async function runMockStreamingEngine(
   messages: ChatMessage[],
   _modelId: string,
@@ -405,81 +690,54 @@ async function runMockStreamingEngine(
   const lastUserMsg = messages[messages.length - 1]?.content || ''
   
   const thinkingSnippets = [
-    `Analyzing user prompt: "${lastUserMsg.slice(0, 30)}..."\n`,
-    "Deconstructing requirements into architectural components...\n",
-    "Checking UI tokens and CSS Module bindings...\n",
-    "Formulating reasoning chain for optimal code response...\n",
-    "Validating TypeScript types and Markdown syntax highlight requirements...\n",
-    "Synthesis complete. Ready to output structured response.",
+    `Phân tích câu hỏi: "${lastUserMsg.slice(0, 30)}..."\n`,
+    "Truy vấn tài liệu nguồn trong dự án Qdrant...\n",
+    "Trích xuất văn bản và bảng biểu tương thích...\n",
+    "Xây dựng câu trả lời kèm trích dẫn chính xác (Citations)...\n",
   ]
 
-  // 1. Stream Thinking
   for (const snippet of thinkingSnippets) {
     if (signal?.aborted) return
     for (const char of snippet) {
       if (signal?.aborted) return
       callbacks.onThinkingChunk?.(char)
-      await new Promise(r => setTimeout(r, 12))
+      await new Promise(r => setTimeout(r, 10))
     }
-    await new Promise(r => setTimeout(r, 80))
+    await new Promise(r => setTimeout(r, 60))
   }
   callbacks.onThinkingDone?.()
 
-  // 2. Stream a Step demonstration
   const sampleStep: ToolStep = {
-    id: 'step-1',
-    title: 'Executing Terminal Command: pnpm list --depth 0',
-    type: 'terminal',
-    output: '✓ @deepseek-ai/dsh-client-web v1.0.0\n✓ react v18.3.1\n✓ vite v6.0.1\nDone in 0.12s.',
+    id: 'step-rag',
+    title: 'Vector Retrieval: Tìm thấy 3 đoạn văn bản liên quan trong Project',
+    type: 'search',
+    output: '✓ Document: Ke_hoach_kinh_doanh.pdf (Chunk #12, Score 0.94)\n✓ Document: Bao_cao_Q3.pdf (Chunk #4, Score 0.88)',
     status: 'ok',
   }
   callbacks.onStepUpdate?.(sampleStep)
-  await new Promise(r => setTimeout(r, 200))
+  await new Promise(r => setTimeout(r, 150))
 
-  // 3. Stream Content Markdown
-  const markdownResponse = `Dưới đây là kết quả xử lý cho yêu cầu của bạn:
+  const markdownResponse = `Dưới đây là câu trả lời được trích xuất từ tài liệu dự án của bạn:
 
-### 1. Phân tích Giải pháp
-Giao diện đã tích hợp đầy đủ **Thinking/Reasoning CoT**, các bước **Tool Steps**, và bộ render **Markdown** cao cấp.
+### 1. Phân Tích Thông Tin
+Dựa trên tài liệu bạn đã nạp vào **Dự án RAGFlash**, hệ thống đã tổng hợp được các thông tin quan trọng sau:
 
-- **Tốc độ phản hồi:** 120 Tokens/s
-- **Hỗ trợ công thức Toán học (KaTeX):**
-  $$E = mc^2 \\quad \\text{và} \\quad \\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}$$
+- **Nguồn tài liệu:** Đã đối soát chính xác với các chunks trong vector database.
+- **Tốc độ xử lý:** 140 Tokens/s
+- **Công thức tính toán liên quan:**
+  $$RAG_{accuracy} = \\frac{\\text{Evidence Hits}}{\\text{Total Queries}} \\times 100\\%$$
 
-### 2. Ví dụ Code Block
-\`\`\`typescript
-import { useChatStore } from '@/store/useChatStore'
+### 2. Trích dẫn (Citations)
+> [1] *Bao_cao_Q3.pdf - Trang 14, Đoạn 2:* Kế hoạch tăng trưởng đạt 125% so với cùng kỳ.
 
-export function ChatButton() {
-  const sendMessage = useChatStore((s) => s.sendMessage)
-  return (
-    <button onClick={() => sendMessage('Hello DeepSeek!')}>
-      Gửi tin nhắn
-    </button>
-  )
-}
-\`\`\`
-
-### 3. Bảng dữ liệu (Table)
-| Thành phần | Trạng thái | Đánh giá |
-| :--- | :--- | :--- |
-| **Thinking CoT** | Hoàn thành | 100% Mượt mà |
-| **Markdown & Code** | Hoàn thành | Chuẩn Highlight |
-| **KaTeX Math** | Hoàn thành | Sắc nét |
-
-Bạn có thể cấu hình \`VITE_ENABLE_MOCK=false\` trong file \`.env\` để kết nối trực tiếp với Backend FastAPI chuẩn Production!`
+Bạn có thể tiếp tục hỏi thêm về các tài liệu khác trong dự án này!`
 
   for (let i = 0; i < markdownResponse.length; i += 2) {
     if (signal?.aborted) return
     const chunk = markdownResponse.slice(i, i + 2)
     callbacks.onContentChunk?.(chunk)
-    await new Promise(r => setTimeout(r, 15))
+    await new Promise(r => setTimeout(r, 12))
   }
-
-  // 4. Produced files demo
-  callbacks.onProducedFiles?.([
-    { id: 'f-1', name: 'auth-integration.md', path: '/src/artifacts/auth-integration.md', size: '2.4 KB' }
-  ])
 
   callbacks.onDone?.()
 }

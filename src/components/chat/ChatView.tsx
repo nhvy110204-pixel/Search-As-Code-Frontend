@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Sparkles, ArrowDown, Code2, Cpu, FileQuestion, Lightbulb } from 'lucide-react'
+import {
+  IconSparkle16, IconCodeOutline16, IconAgentPresetOutline16, IconLightOutline16,
+  IconQuestionOutline14, IconChevronDownOutline14
+} from '@/components/ui'
 import { useChatStore } from '@/store/useChatStore'
 import { MessageItem } from './MessageItem'
 import { ChatInput } from './ChatInput'
@@ -8,25 +11,25 @@ import css from './ChatView.module.css'
 
 const SUGGESTIONS = [
   {
-    icon: Code2,
+    icon: IconCodeOutline16,
     title: 'Viết thuật toán & Code',
     desc: 'Tối ưu hóa hàm React & giải thích độ phức tạp thuật toán O(n)',
     prompt: 'Hãy viết một Custom Hook React useWebSocket có hỗ trợ auto reconnect và giải thích chi tiết.',
   },
   {
-    icon: Cpu,
+    icon: IconAgentPresetOutline16,
     title: 'Tư duy suy nghĩ sâu (CoT)',
     desc: 'Giải bài toán hóc búa với mô hình DeepSeek Reasoner',
     prompt: 'Giải bài toán: Một người có 3 giỏ táo, mỗi giỏ chứa số lượng táo khác nhau... Hãy suy nghĩ từng bước.',
   },
   {
-    icon: Lightbulb,
+    icon: IconLightOutline16,
     title: 'Lập kế hoạch kiến trúc',
     desc: 'Thiết kế hệ thống Microservices quy mô lớn',
     prompt: 'Hãy lập kế hoạch thiết kế hệ thống Chatbot phân tán với hàng triệu người dùng trực tuyến.',
   },
   {
-    icon: FileQuestion,
+    icon: IconQuestionOutline14,
     title: 'Giải đáp & Phân tích',
     desc: 'Phân tích tài liệu và trả lời câu hỏi phức tạp',
     prompt: 'So sánh chi tiết sự khác biệt giữa Server-Sent Events (SSE) và WebSocket.',
@@ -86,7 +89,7 @@ export function ChatView() {
         {messages.length === 0 ? (
           <div className={css.emptyState}>
             <div className={css.welcomeIcon}>
-              <Sparkles size={28} />
+              <IconSparkle16 size={28} />
             </div>
             <h2 className={css.welcomeTitle}>Tôi có thể giúp gì cho bạn hôm nay?</h2>
             <p className={css.welcomeSubtitle}>
@@ -104,7 +107,7 @@ export function ChatView() {
                     onClick={() => sendMessage(item.prompt)}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <IconComponent size={16} style={{ color: 'var(--dsw-alias-brand-primary-new-colorprimary-new-color)' }} />
+                      <IconComponent size={16} style={{ color: 'var(--dsw-alias-brand-primary)' }} />
                       <span className={css.suggestionTitle}>{item.title}</span>
                     </div>
                     <span className={css.suggestionDesc}>{item.desc}</span>
@@ -138,7 +141,7 @@ export function ChatView() {
           onClick={() => scrollToBottom('smooth')}
           aria-label="Cuộn xuống dưới cùng"
         >
-          <ArrowDown size={16} />
+          <IconChevronDownOutline14 size={16} />
         </button>
       )}
 

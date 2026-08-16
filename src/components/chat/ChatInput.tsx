@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, type KeyboardEvent, type ChangeEvent } from 'react'
-import { ArrowUp, Square, Paperclip } from 'lucide-react'
+import {
+  IconSendOutline16, IconStopFill16, IconPaperclipOutline16, Tooltip
+} from '@/components/ui'
 import type { AttachmentFile } from '@/types/chat'
 import { AttachmentRail } from '@/components/attachment/AttachmentRail'
 import { DropOverlay } from '@/components/attachment/DropOverlay'
-import { Tooltip } from '@/components/ui/Tooltip'
 import css from './ChatInput.module.css'
 
 export interface ChatInputProps {
@@ -136,7 +137,7 @@ export function ChatInput({
                 onClick={() => fileInputRef.current?.click()}
                 aria-label="Đính kèm tệp"
               >
-                <Paperclip size={18} />
+                <IconPaperclipOutline16 size={18} />
               </button>
             </Tooltip>
           </div>
@@ -150,7 +151,7 @@ export function ChatInput({
                   onClick={onStopStreaming}
                   aria-label="Dừng sinh phản hồi"
                 >
-                  <Square size={14} fill="currentColor" />
+                  <IconStopFill16 size={14} />
                 </button>
               </Tooltip>
             ) : (
@@ -162,7 +163,7 @@ export function ChatInput({
                   onClick={handleSend}
                   aria-label="Gửi"
                 >
-                  <ArrowUp size={18} />
+                  <IconSendOutline16 size={18} />
                 </button>
               </Tooltip>
             )}

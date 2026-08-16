@@ -69,3 +69,6 @@ chatbot-web-fe/
    - **Control / Button / Input (12px / 8px)**: `border-radius: var(--dsw-radius-md, 12px);` hoặc `var(--dsw-radius-sm, 8px);`.
    - **Row item / Chip / Tag (8px)**: `border-radius: var(--dsw-radius-sm, 8px);`.
 5. **Tích Hợp Backend Chuẩn Production**: Mọi request yêu cầu xác thực sử dụng `fetchWithAuth` từ `src/services/api.ts` để tự động đính kèm Bearer token và xử lý refresh token 401 tự động.
+6. **Quy Chuẩn Sử Dụng Icon (Icon Usage Priority)**:
+   - **Ưu tiên 1 (Tuyệt đối)**: Luôn ưu tiên sử dụng icon từ `@/components/ui/icons` (hoặc `@/components/ui`) nếu có sẵn (ví dụ: `IconSettingsOutline16`, `IconFolderClose16`, `IconFolderOpen16`, `IconNewChatOutline16`, `IconSearchOutline16`, `IconTrashOutline16`, `IconEditOutline16`, `IconCloseOutline16`, v.v.) để đảm bảo đồng nhất 100% nét vẽ và phong cách Design System đặc trưng.
+   - **Ưu tiên 2**: Chỉ khi trong `@/components/ui/icons` **không có sẵn** icon tương ứng thì mới import và sử dụng icon bổ trợ từ thư viện `lucide-react`.

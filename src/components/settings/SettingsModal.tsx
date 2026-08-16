@@ -1,5 +1,8 @@
 import { useEffect, useId } from 'react'
-import { Settings, Cpu, UserCheck, Blocks, X } from 'lucide-react'
+import {
+  IconSettingsOutline16, IconDataOutline16, IconAgentPresetOutline16,
+  IconCordisPluginOutline14, IconCloseOutline16
+} from '@/components/ui'
 import { useSettingsStore } from '@/store/useSettingsStore'
 import { GeneralSettingsTab } from './GeneralSettingsTab'
 import { ModelSettingsTab } from './ModelSettingsTab'
@@ -8,10 +11,10 @@ import { PluginsSettingsTab } from './PluginsSettingsTab'
 import css from './SettingsModal.module.css'
 
 const NAV_ITEMS = [
-  { id: 'general', label: 'Cài đặt Chung', icon: Settings },
-  { id: 'models', label: 'Mô hình & API', icon: Cpu },
-  { id: 'presets', label: 'Vai trò & Persona', icon: UserCheck },
-  { id: 'plugins', label: 'Công cụ & MCP', icon: Blocks },
+  { id: 'general', label: 'Cài đặt Chung', icon: IconSettingsOutline16 },
+  { id: 'models', label: 'Mô hình & API', icon: IconDataOutline16 },
+  { id: 'presets', label: 'Vai trò & Persona', icon: IconAgentPresetOutline16 },
+  { id: 'plugins', label: 'Công cụ & MCP', icon: IconCordisPluginOutline14 },
 ] as const
 
 export function SettingsModal() {
@@ -69,7 +72,7 @@ export function SettingsModal() {
               onClick={closeSettings}
               aria-label="Đóng cài đặt"
             >
-              <X size={18} />
+              <IconCloseOutline16 size={18} />
             </button>
           </div>
 

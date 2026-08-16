@@ -1,6 +1,9 @@
-import { Globe, Terminal, Server, Plus, Trash2 } from 'lucide-react'
 import { useSettingsStore } from '@/store/useSettingsStore'
-import { Button, Switch } from '@/components/ui'
+import {
+  Button, Switch,
+  IconGlobeOutline14, IconCodeOutline16, IconCordisPluginOutline14,
+  IconPlusOutline16, IconTrashOutline16
+} from '@/components/ui'
 import css from './SettingsModal.module.css'
 
 export function PluginsSettingsTab() {
@@ -32,7 +35,7 @@ export function PluginsSettingsTab() {
         <div className={css.rowBetween}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} className={css.label}>
-              <Globe size={15} />
+              <IconGlobeOutline14 size={15} />
               <span>Tìm kiếm Web Trực tiếp (Web Search)</span>
             </div>
             <div className={css.description}>Cho phép mô hình tra cứu thông tin thời gian thực trên Internet</div>
@@ -46,7 +49,7 @@ export function PluginsSettingsTab() {
         <div className={css.rowBetween}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} className={css.label}>
-              <Terminal size={15} />
+              <IconCodeOutline16 size={15} />
               <span>Chạy Mã Sandbox / Terminal (Code Runner)</span>
             </div>
             <div className={css.description}>Cho phép thực thi lệnh bash và code Python/JavaScript trong môi trường cách ly</div>
@@ -62,7 +65,7 @@ export function PluginsSettingsTab() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <label className={css.label}>Máy chủ Model Context Protocol (MCP Servers)</label>
           <Button variant="ghost" onClick={addMcpServer}>
-            <Plus size={14} style={{ marginRight: 4 }} />
+            <IconPlusOutline16 size={14} style={{ marginRight: 4 }} />
             Thêm MCP Server
           </Button>
         </div>
@@ -72,7 +75,7 @@ export function PluginsSettingsTab() {
             <div key={idx} className={css.rowBetween}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Server size={14} style={{ color: 'var(--dsw-alias-brand-primary-new-colorprimary-new-color)' }} />
+                  <IconCordisPluginOutline14 size={14} style={{ color: 'var(--dsw-alias-brand-primary)' }} />
                   <span className={css.label}>{server.name}</span>
                 </div>
                 <div className={css.description} style={{ fontFamily: 'var(--ds-font-family-code)' }}>{server.url}</div>
@@ -84,11 +87,11 @@ export function PluginsSettingsTab() {
                 />
                 <button
                   type="button"
-                  style={{ border: 'none', background: 'transparent', color: 'var(--dsw-alias-label-tertiary)', cursor: 'pointer', padding: 4 }}
+                  style={{ border: 'none', background: 'transparent', color: 'var(--dsw-alias-state-error-primary)', cursor: 'pointer', padding: 4 }}
                   onClick={() => deleteMcpServer(idx)}
                   title="Xóa máy chủ"
                 >
-                  <Trash2 size={14} />
+                  <IconTrashOutline16 size={14} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />
                 </button>
               </div>
             </div>

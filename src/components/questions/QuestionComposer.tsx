@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import clsx from 'clsx'
-import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button } from '@/components/ui'
+import {
+  Button, IconCheckOutline16, IconChevronLeftOutline14, IconChevronRightOutline14
+} from '@/components/ui'
 import css from './QuestionComposer.module.css'
 
 export interface QuestionOption {
@@ -92,7 +93,7 @@ export function QuestionComposer({
                 onClick={handlePrev}
                 aria-label="Câu trước"
               >
-                <ChevronLeft size={16} />
+                <IconChevronLeftOutline14 size={16} />
               </button>
               <span className={css.progress}>
                 {currentIndex + 1} / {questions.length}
@@ -104,7 +105,7 @@ export function QuestionComposer({
                 onClick={handleNext}
                 aria-label="Câu tiếp theo"
               >
-                <ChevronRight size={16} />
+                <IconChevronRightOutline14 size={16} />
               </button>
             </div>
           )}
@@ -126,7 +127,7 @@ export function QuestionComposer({
                 >
                   {isMulti ? (
                     <div className={clsx(css.checkbox, isSelected && css.checkboxChecked)}>
-                      {isSelected && <Check size={10} />}
+                      {isSelected && <IconCheckOutline16 size={10} />}
                     </div>
                   ) : (
                     <div className={css.number}>{idx + 1}</div>

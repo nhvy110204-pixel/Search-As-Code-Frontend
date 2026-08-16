@@ -1,4 +1,4 @@
-import { FileText, Download } from 'lucide-react'
+import { IconBrowseOutline16, IconDownloadOutline16 } from '@/components/ui'
 import type { ProducedFile } from '@/types/chat'
 import css from './ProducedFiles.module.css'
 
@@ -13,7 +13,7 @@ export function ProducedFiles({ files, onOpenFile }: ProducedFilesProps) {
   return (
     <div className={css.root}>
       <div className={css.header}>
-        <FileText size={14} />
+        <IconBrowseOutline16 size={14} />
         <span>Tệp được tạo ({files.length}):</span>
       </div>
       <div className={css.list}>
@@ -26,7 +26,7 @@ export function ProducedFiles({ files, onOpenFile }: ProducedFilesProps) {
           >
             <span>{file.name}</span>
             {file.size && <span className={css.fileSize}>({file.size})</span>}
-            <Download size={12} style={{ marginLeft: 2 }} />
+            <IconDownloadOutline16 size={12} style={{ marginLeft: 2 }} />
           </button>
         ))}
       </div>

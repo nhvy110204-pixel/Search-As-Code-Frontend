@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { FolderPlus, X } from 'lucide-react'
+import { IconProjectAddOutline16, IconCloseOutline16, Button } from '@/components/ui'
 import { useChatStore } from '@/store/useChatStore'
-import { Button } from '@/components/ui/Button'
 import css from './AddWorkspaceModal.module.css'
 
 export interface AddWorkspaceModalProps {
@@ -31,11 +30,11 @@ export function AddWorkspaceModal({ open, onClose }: AddWorkspaceModalProps) {
       <div className={css.modal} role="dialog" aria-modal="true">
         <div className={css.header}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <FolderPlus size={18} style={{ color: 'var(--dsw-alias-brand-primary-new-colorprimary-new-color)' }} />
+            <IconProjectAddOutline16 size={18} style={{ color: 'var(--dsw-alias-brand-primary)' }} />
             <h3 className={css.title}>Thêm Thư mục / Workspace</h3>
           </div>
           <button type="button" className={css.closeBtn} onClick={onClose}>
-            <X size={16} />
+            <IconCloseOutline16 size={16} />
           </button>
         </div>
 

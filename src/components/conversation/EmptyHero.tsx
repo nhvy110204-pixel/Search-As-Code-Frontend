@@ -1,8 +1,13 @@
 import { useState, useRef } from 'react'
-import { Folder, Send, Calendar, Code2, Sparkles, Cpu, Bot, Settings2 } from 'lucide-react'
-import { IconChevronDownOutline14, FishLogo, Menu } from '@/components/ui'
+import {
+  IconChevronDownOutline14, FishLogo, Menu,
+  IconFolderClose16, IconFolderOpen16, IconSettingsOutline14, IconBrowseOutline16,
+  IconSendOutline16, IconCodeOutline16, IconSparkle16, IconAgentPresetOutline16,
+  IconThinkOutline16, IconChecklistOutline14,
+} from '@/components/ui'
 import type { MenuEntry } from '@/components/ui/Menu'
-import { useChatStore } from '@/store/useChatStore'
+import { useProjectStore } from '@/store/useProjectStore'
+import { useViewStore } from '@/store/useViewStore'
 import { useSettingsStore } from '@/store/useSettingsStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import css from './HeroShell.module.css'
@@ -14,39 +19,44 @@ export interface EmptyHeroProps {
 function getPresetIcon(iconName?: string, size = 14) {
   switch (iconName) {
     case 'Send':
-      return <Send size={size} />
+      return <IconSendOutline16 size={size} />
     case 'Calendar':
-      return <Calendar size={size} />
+      return <IconChecklistOutline14 size={size} />
     case 'Code2':
-      return <Code2 size={size} />
+      return <IconCodeOutline16 size={size} />
     case 'Sparkles':
-      return <Sparkles size={size} />
+      return <IconSparkle16 size={size} />
     case 'Cpu':
-      return <Cpu size={size} />
+      return <IconAgentPresetOutline16 size={size} />
     case 'Bot':
-      return <Bot size={size} />
+      return <IconThinkOutline16 size={size} />
     default:
-      return <Send size={size} />
+      return <IconSendOutline16 size={size} />
   }
 }
 
 export function EmptyHero({ onOpenWorkspacePicker }: EmptyHeroProps) {
-  const { workspaces, activeWorkspaceId } = useChatStore()
+  const { getActiveProject } = useProjectStore()
+  const { navigateToProjects, navigateToProjectDetail } = useViewStore()
   const { presets, selectedPresetId, setSelectedPreset, openSettings } = useSettingsStore()
   const [presetMenuOpen, setPresetMenuOpen] = useState(false)
   const presetAnchorRef = useRef<HTMLButtonElement>(null)
 
   const { isAuthenticated, openLoginModal } = useAuthStore()
 
-  const activeWs = workspaces.find((w) => w.id === activeWorkspaceId)
+  const activeProject = getActiveProject()
   const activePreset = presets.find((p) => p.id === selectedPresetId) || presets[0]
 
-  const handleWorkspaceClick = () => {
+  const handleProjectClick = () => {
     if (!isAuthenticated) {
       openLoginModal('login')
       return
     }
-    onOpenWorkspacePicker?.()
+    if (activeProject) {
+      navigateToProjectDetail(activeProject.id, 'documents')
+    } else {
+      navigateToProjects()
+    }
   }
 
   const menuItems: MenuEntry[] = [
@@ -83,7 +93,7 @@ export function EmptyHero({ onOpenWorkspacePicker }: EmptyHeroProps) {
     {
       id: 'manage-presets',
       label: 'Manage Agent Presets...',
-      icon: <Settings2 size={14} />,
+      icon: <IconSettingsOutline14 size={14} />,
     },
   ]
 
@@ -105,23 +115,42 @@ export function EmptyHero({ onOpenWorkspacePicker }: EmptyHeroProps) {
             <FishLogo className={css.fish} size={30} />
           </span>
           <span className={css.headlineText}>Tôi có thể giúp gì cho bạn?</span>
-          <span className={css.previewBadge}>PROD</span>
+          <span className={css.previewBadge}>RAG</span>
         </div>
 
         <div className={css.body}>
           {/* Workspace Chip & Agent Preset Chip Row */}
           <div className={css.workspaceRow}>
-            {/* 1. Workspace folder selector */}
+            {/* 1. Project selector chip */}
             <button
               type="button"
               className={css.workspace}
-              onClick={handleWorkspaceClick}
-              aria-label="Chọn thư mục làm việc"
+              onClick={handleProjectClick}
+              aria-label="Chọn dự án làm việc"
+              title="Nhấp để xem và quản lý tài liệu trong dự án này"
             >
-              <Folder size={14} className={css.folder} />
-              <span className={css.workspaceLabel}>
-                {activeWs ? activeWs.name : 'Chọn thư mục làm việc'}
+              <span className={css.folder}>
+                <IconFolderClose16 size={15} className={css.iconClosed} />
+                <IconFolderOpen16 size={15} className={css.iconOpen} />
               </span>
+              <span className={css.workspaceLabel}>
+                {activeProject ? `Dự án: ${activeProject.name}` : 'Chọn không gian dự án'}
+              </span>
+              {activeProject && (
+                <span
+                  style={{
+                    fontSize: 11,
+                    padding: '1px 6px',
+                    borderRadius: 4,
+                    background: 'var(--dsw-alias-bg-module-platform)',
+                    color: 'var(--dsw-alias-label-secondary)',
+                    marginLeft: 4,
+                  }}
+                >
+                  <IconBrowseOutline16 size={10} style={{ display: 'inline', marginRight: 2 }} />
+                  {activeProject.document_count || 0} file
+                </span>
+              )}
               <IconChevronDownOutline14 className={css.chevron} size={12} />
             </button>
 

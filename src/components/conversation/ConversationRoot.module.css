@@ -29,19 +29,11 @@
   position: relative;
   flex: none;
   padding: 12px 28px 12px 20px;
-  border-bottom: 1px solid transparent;
+  border-bottom: none;
 }
 
 .header::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  bottom: 1px;
-  left: 0;
-  z-index: 0;
-  height: 1px;
-  background: var(--dsw-alias-border-l2);
-  pointer-events: none;
+  display: none;
 }
 
 .headerHidden {
@@ -157,9 +149,72 @@
 }
 
 .crumbCurrent {
-  font-weight: 500;
+  font-family: var(--dsw-font-family);
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 20px;
   color: var(--dsw-alias-label-primary);
   cursor: default;
+}
+
+.projectCrumbBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font-family: var(--dsw-font-family);
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 20px;
+  cursor: pointer;
+  padding: 3px 6px;
+  margin-right: 4px;
+  transition: all 120ms ease;
+}
+
+.projectCrumbBtn:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+.projectCrumbBtn .folderSwap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dsw-alias-brand-primary);
+}
+
+.projectCrumbBtn .folderSwap .iconOpen {
+  display: none;
+}
+
+.projectCrumbBtn:hover .folderSwap .iconClosed {
+  display: none;
+}
+
+.projectCrumbBtn:hover .folderSwap .iconOpen {
+  display: inline-flex;
+}
+
+.projectCrumbName {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--dsw-font-family);
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 20px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.projectCrumbDivider {
+  opacity: 0.4;
+  margin-left: 2px;
+  color: var(--dsw-alias-label-tertiary);
 }
 
 .headerActions {

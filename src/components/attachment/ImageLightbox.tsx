@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { X } from 'lucide-react'
+import { IconCloseOutline16 } from '@/components/ui'
 import css from './ImageLightbox.module.css'
 
 export interface ImageLightboxProps {
@@ -24,7 +24,7 @@ export function ImageLightbox({ url, alt = 'Xem ảnh', onClose }: ImageLightbox
     <div className={css.backdrop} onClick={onClose}>
       <div className={css.content} onClick={(e) => e.stopPropagation()}>
         <button type="button" className={css.closeButton} onClick={onClose} aria-label="Đóng">
-          <X size={18} />
+          <IconCloseOutline16 size={18} />
         </button>
         <img src={url} alt={alt} className={css.image} />
       </div>

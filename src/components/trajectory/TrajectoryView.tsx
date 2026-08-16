@@ -1,4 +1,7 @@
-import { Terminal, FileCode, Search, Globe, CheckCircle2, Clock } from 'lucide-react'
+import {
+  IconCodeOutline16, IconBrowseOutline16, IconSearchOutline16,
+  IconGlobeOutline14, IconCheckOutline16, IconLoadingOutline16
+} from '@/components/ui'
 import type { ChatSession } from '@/types/chat'
 import css from './TrajectoryView.module.css'
 
@@ -32,10 +35,10 @@ export function TrajectoryView({ session }: TrajectoryViewProps) {
 
         <div>
           {steps.map((step, idx) => {
-            let Icon = Terminal
-            if (step.type === 'diff') Icon = FileCode
-            if (step.type === 'search') Icon = Search
-            if (step.type === 'web') Icon = Globe
+            let Icon = IconCodeOutline16
+            if (step.type === 'diff') Icon = IconBrowseOutline16
+            if (step.type === 'search') Icon = IconSearchOutline16
+            if (step.type === 'web') Icon = IconGlobeOutline14
 
             return (
               <div key={step.id || idx} className={css.stepItem}>
@@ -52,7 +55,11 @@ export function TrajectoryView({ session }: TrajectoryViewProps) {
                   )}
                 </div>
                 <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 4, color: 'var(--dsw-alias-state-success-primary)' }}>
-                  {step.status === 'running' ? <Clock size={14} /> : <CheckCircle2 size={14} />}
+                  {step.status === 'running' ? (
+                    <IconLoadingOutline16 size={14} className="spin" />
+                  ) : (
+                    <IconCheckOutline16 size={14} />
+                  )}
                 </div>
               </div>
             )

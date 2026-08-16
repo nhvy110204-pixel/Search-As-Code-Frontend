@@ -275,7 +275,7 @@ systemPrompt: |
                       style={{ marginLeft: 'auto', color: 'var(--dsw-alias-state-error-primary)' }}
                       onClick={() => handleDeleteCustom(row.id)}
                     >
-                      <IconTrashOutline16 size={15} />
+                      <IconTrashOutline16 size={15} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />
                     </button>
                   </div>
                 </li>

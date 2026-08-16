@@ -29,14 +29,6 @@
   padding: 18px 10px 6px;
 }
 
-/* Scrollbars in the column are a pointer affordance: the shell adds this
-   class whenever the pointer is not inside (SidebarRoot.tsx owns the linger),
-   and rebinding ui-theme's indirection pair to `transparent` takes the thumb
-   out of every scroll region nested under it — the workspace browser's
-   session list today. `transparent` rather than `display: none` on the bar:
-   the reservation (`scrollbar-gutter: stable` on the list) stays in force, so
-   revealing the thumb never reflows a row. Rebinding contract and the two
-   rendering paths it reaches: ui-theme's README. */
 .root.quietBars {
   --dsh-scrollbar-thumb: transparent;
   --dsh-scrollbar-thumb-hover: transparent;
@@ -58,13 +50,8 @@
   from { opacity: 0; }
 }
 
-/* At the 150ms rail settle, the four upper controls enter from the former
-   rail right edge over the remaining 150ms of the AppFrame track transition.
-   The bottom-pinned settings seat shares their opacity timeline but stays
-   horizontally fixed. Only a live collapse gets .railIn; a cold collapsed
-   render stays static. */
 .railIn .iconButton,
-.railIn .newSession,
+.railIn .navItem,
 .railIn .regionArea {
   animation: rail-in 150ms var(--ds-ease-in-out) backwards;
 }
@@ -84,18 +71,16 @@
   from { opacity: 0; }
 }
 
-/* Logo row (figma pad (4,8,4,8)): expanded keeps the panel toggle at the
-   right edge; the rail gives every control the same base left anchor before
-   the shared entry translation is applied. */
+/* Logo row */
 .logoRow {
   flex: none;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  height: 60px;
-  padding: 8px 0 8px 4px;
-  margin-bottom: 8px;
+  height: 48px;
+  padding: 0 8px;
+  margin-bottom: 6px;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -107,10 +92,6 @@
   justify-content: flex-start;
 }
 
-/* Brand group (figma I133:7632): the full wordmark rides the text ink
-   (figma flows: the main-screen instance is black; blue is brand
-   emphasis only). A button only in behavior (New Session shortcut): the
-   pointer cursor is the sole affordance — no hover chrome on the mark. */
 .brand {
   flex: 1;
   min-width: 0;
@@ -148,9 +129,6 @@
   height: 36px;
 }
 
-/* Rail logo swap: collapsed, the toggle rests as the whale mark (brand ink,
-   no hover circle) and hovering reveals the panel icon — the expand
-   affordance (figma sidebar-hover flow). Expanded it is a plain panel icon. */
 .collapsed .toggle .panelIcon {
   display: none;
 }
@@ -163,130 +141,129 @@
   display: none;
 }
 
-/* Rail icons ride the primary ink (figma rail spec); expanded keeps the
-   secondary icon-button ink. */
 .collapsed .iconButton {
   color: var(--dsw-alias-label-primary);
 }
 
-/* New Session: 38px bar, 12px radius (figma 133:7634 geometry, squared-off
-   corners); collapsed it renders as the rail's plain icon control. */
-.newSession {
+/* Flat Nav Items (Đoạn chat mới, Dự án) matching session name typography */
+.navItem {
   flex: none;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 38px;
-  padding: 8px 16px;
-  margin: 0 2px 8px;
+  justify-content: flex-start;
+  gap: 8px;
+  height: 34px;
+  padding: 0 8px;
+  margin: 0 0 2px;
   box-sizing: border-box;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 12px;
-  background: var(--dsw-alias-button-elevated-fill);
+  border: none;
+  border-radius: 8px;
+  background: transparent;
   color: var(--dsw-alias-label-primary);
   font-family: var(--dsw-font-family);
-  font-size: 14px;
-  font-weight: 550;
-  font-variation-settings: 'wght' 550;
-  line-height: 22px;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 20px;
   cursor: pointer;
+  text-align: left;
+  user-select: none;
   overflow: hidden;
+  transition: background var(--ds-transition-duration-fast) var(--ds-ease-in-out), color var(--ds-transition-duration-fast) var(--ds-ease-in-out);
 }
 
-.newSession:hover {
-  background: var(--dsw-alias-button-floating-hover);
+.navItem:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
 }
 
-.collapsed .newSession {
+.navItem.navItemActive {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+  font-weight: 450;
+}
+
+.navIconSlot {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dsw-alias-label-primary);
+  margin: 0;
+  padding: 0;
+}
+
+.folderSwap .iconOpen {
+  display: none;
+}
+
+.navItem:hover .folderSwap .iconClosed {
+  display: none;
+}
+
+.navItem:hover .folderSwap .iconOpen {
+  display: inline-flex;
+}
+
+.navItemActive .folderSwap .iconClosed {
+  display: none;
+}
+
+.navItemActive .folderSwap .iconOpen {
+  display: inline-flex;
+}
+
+.navLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--dsw-alias-label-primary);
+}
+
+.collapsed .navItem {
   align-self: flex-start;
   width: 36px;
   height: 36px;
   padding: 0;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
+  justify-content: center;
   gap: 0;
-  border-color: transparent;
-  background: transparent;
+  border-radius: 8px;
 }
 
-.collapsed .newSession:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+.collapsed .navLabel {
+  display: none;
 }
 
-.newSessionLabel {
-  max-width: 200px;
-  overflow: hidden;
-  white-space: nowrap;
-  font-family: var(--dsw-font-family);
-  font-weight: 550;
-  font-variation-settings: 'wght' 550;
-  letter-spacing: -0.01em;
-}
-
-.collapsed .newSessionLabel {
-  max-width: 0;
-}
-
-/* Region seat: always mounted so the foot never moves. Its trailing margin
-   cancels the wide shell inset so the nested scrollbar can sit at the sidebar
-   edge; the browser restores that inset inside its own rows. */
+/* Region seat */
 .regionArea {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  margin-left: -4px;
-  margin-right: calc(-1 * var(--dsh-sidebar-inline-padding));
-  padding-left: 4px;
+  margin-top: 4px;
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 0;
   overflow: hidden;
 }
 
 .collapsed .regionArea {
+  margin-top: 0;
   margin-left: 0;
   margin-right: 0;
   padding-left: 0;
 }
 
-/* Footer seats: additive actions stack above Settings. Each occupant owns its
-   button geometry and hover chrome. */
+/* Footer seats */
 .footArea {
   flex: none;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 6px;
-}
-
-.settingsArea,
-.footerActions {
-  flex: none;
-  min-width: 0;
-  width: 100%;
-}
-
-.footerActions {
-  display: flex;
-}
-
-.collapsed .footArea {
-  align-items: center;
-}
-
-.collapsed .settingsArea,
-.collapsed .footerActions {
-  display: flex;
-  justify-content: center;
-  width: auto;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .wide,
-  .fading > *,
-  .railIn .iconButton,
-  .railIn .newSession,
-  .railIn .footArea,
-  .railIn .regionArea {
-    transition: none;
-    animation: none;
-  }
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--dsw-alias-border-l1);
 }

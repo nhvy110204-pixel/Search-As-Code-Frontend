@@ -1,8 +1,7 @@
-import { Sun, Moon, Trash2, Download } from 'lucide-react'
 import { useSettingsStore } from '@/store/useSettingsStore'
 import { useThemeStore } from '@/store/useThemeStore'
 import { useChatStore } from '@/store/useChatStore'
-import { Button, SelectDropdown } from '@/components/ui'
+import { Button, SelectDropdown, IconDownloadOutline16, IconTrashOutline16 } from '@/components/ui'
 import css from './SettingsModal.module.css'
 
 export function GeneralSettingsTab() {
@@ -65,7 +64,7 @@ export function GeneralSettingsTab() {
           <div className={css.description}>Tải về toàn bộ tin nhắn và các phiên trò chuyện dưới dạng file JSON</div>
         </div>
         <Button variant="secondary" onClick={handleExportData}>
-          <Download size={15} style={{ marginRight: 6 }} />
+          <IconDownloadOutline16 size={15} style={{ marginRight: 6 }} />
           JSON
         </Button>
       </div>
@@ -79,7 +78,7 @@ export function GeneralSettingsTab() {
         </div>
         <div>
           <Button variant="danger" onClick={handleClearHistory}>
-            <Trash2 size={15} style={{ marginRight: 6 }} />
+            <IconTrashOutline16 size={15} style={{ marginRight: 6 }} />
             Xóa toàn bộ lịch sử
           </Button>
         </div>

@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import clsx from 'clsx'
-import { Tooltip } from '@/components/ui/Tooltip'
-import { Menu, type MenuEntry } from '@/components/ui/Menu'
-import { IconSettingsOutline14 } from '@/components/ui/icons'
+import {
+  Tooltip, Menu, type MenuEntry,
+  IconSettingsOutline14, IconUserOutline16, IconRightUpOutline14
+} from '@/components/ui'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useSettingsStore } from '@/store/useSettingsStore'
-import { User, LogIn, LogOut, UserCheck } from 'lucide-react'
 import css from './SidebarUserControl.module.css'
 
 export interface SidebarUserControlProps {
@@ -35,7 +35,7 @@ export function SidebarUserControl({ wide }: SidebarUserControlProps) {
             onClick={() => openLoginModal('login')}
             aria-label="Đăng nhập hoặc đăng ký"
           >
-            <LogIn size={15} />
+            <IconUserOutline16 size={15} />
             <span className={css.guestBtnLabel}>Đăng nhập / Đăng ký</span>
           </button>
         ) : (
@@ -47,7 +47,7 @@ export function SidebarUserControl({ wide }: SidebarUserControlProps) {
               aria-label="Đăng nhập"
             >
               <div className={css.guestAvatar}>
-                <LogIn size={15} />
+                <IconUserOutline16 size={15} />
               </div>
             </button>
           </Tooltip>
@@ -65,7 +65,7 @@ export function SidebarUserControl({ wide }: SidebarUserControlProps) {
     {
       id: 'profile',
       label: 'Hồ sơ người dùng',
-      icon: <User size={15} />,
+      icon: <IconUserOutline16 size={15} />,
     },
     {
       id: 'settings',
@@ -79,7 +79,7 @@ export function SidebarUserControl({ wide }: SidebarUserControlProps) {
     {
       id: 'logout',
       label: 'Đăng xuất tài khoản',
-      icon: <LogOut size={15} />,
+      icon: <IconRightUpOutline14 size={15} />,
       danger: true,
     },
   ]

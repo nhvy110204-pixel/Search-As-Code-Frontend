@@ -1,4 +1,4 @@
-import { ListTodo } from 'lucide-react'
+import { IconListPenOutline16 } from '@/components/ui'
 import css from './PlanModeControl.module.css'
 
 export interface PlanModeControlProps {
@@ -16,7 +16,7 @@ export function PlanModeControl({ isPlanMode, onToggle }: PlanModeControlProps) 
       tabIndex={0}
       aria-label="Chế độ lập kế hoạch"
     >
-      <ListTodo size={15} />
+      <IconListPenOutline16 size={15} />
       <span>Plan Mode</span>
       <div className={css.toggle}>
         <div className={css.knob} />

@@ -255,6 +255,10 @@
   color: var(--dsw-alias-label-primary);
 }
 
+.actionBtnDanger {
+  color: var(--dsw-alias-state-error-primary);
+}
+
 .actionBtnDanger:hover {
   background: var(--dsw-alias-interactive-bg-hover-danger);
   color: var(--dsw-alias-state-error-primary);

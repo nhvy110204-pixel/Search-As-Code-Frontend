@@ -1,52 +1,51 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import clsx from 'clsx'
-import { FolderPlus } from 'lucide-react'
 import {
   Button, IconCloseOutline16, IconSearchOutline16, Modal, Tooltip
 } from '@/components/ui'
 import { useChatStore } from '@/store/useChatStore'
-import { ProjectRow, SessionRow } from './Rows'
-import type { WorkspaceFolder, ChatSession } from '@/types/chat'
+import { useProjectStore } from '@/store/useProjectStore'
+import { useViewStore } from '@/store/useViewStore'
+import { SessionRow } from './Rows'
+import type { ChatSession } from '@/types/chat'
 import css from './WorkspaceBrowser.module.css'
 
 export interface WorkspaceBrowserProps {
   wide?: boolean
-  onOpenAddWorkspace: () => void
+  onOpenAddWorkspace?: () => void
 }
 
-export function WorkspaceBrowser({ wide = true, onOpenAddWorkspace }: WorkspaceBrowserProps) {
+export function WorkspaceBrowser({ wide = true }: WorkspaceBrowserProps) {
   const {
     sessions,
-    workspaces,
     activeSessionId,
-    activeWorkspaceId,
     selectSession,
     newSession,
     deleteSession,
     forkSession,
     archiveSession,
     updateSessionTitle,
-    deleteWorkspace,
+    fetchSessionsForProject,
   } = useChatStore()
+
+  const { activeProjectId } = useProjectStore()
+  const { navigateToChat } = useViewStore()
 
   const [searchExpanded, setSearchExpanded] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null)
-  const [collapsedWorkspaces, setCollapsedWorkspaces] = useState<Record<string, boolean>>({})
 
   // Dialog targets
-  const [deleteWsTarget, setDeleteWsTarget] = useState<WorkspaceFolder | null>(null)
-  const [renameWsTarget, setRenameWsTarget] = useState<WorkspaceFolder | null>(null)
-  const [renameWsDraft, setRenameWsDraft] = useState('')
-
   const [renameSessionTarget, setRenameSessionTarget] = useState<ChatSession | null>(null)
   const [renameSessionDraft, setRenameSessionDraft] = useState('')
 
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  const toggleWorkspace = (id: string) => {
-    setCollapsedWorkspaces((prev) => ({ ...prev, [id]: !prev[id] }))
-  }
+  useEffect(() => {
+    if (activeProjectId) {
+      fetchSessionsForProject(activeProjectId)
+    }
+  }, [activeProjectId, fetchSessionsForProject])
 
   const handleStartSearch = () => {
     setSearchExpanded(true)
@@ -58,9 +57,19 @@ export function WorkspaceBrowser({ wide = true, onOpenAddWorkspace }: WorkspaceB
     setSearchExpanded(false)
   }
 
-  const filteredSessions = sessions.filter((s) =>
+  // Filter sessions: only show sessions of active project (or unassigned if no active project)
+  const projectSessions = activeProjectId
+    ? sessions.filter((s) => s.projectId === activeProjectId && !s.isArchived)
+    : sessions.filter((s) => !s.isArchived)
+
+  const filteredSessions = projectSessions.filter((s) =>
     s.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const handleSelectSession = (sessionId: string) => {
+    selectSession(sessionId)
+    navigateToChat()
+  }
 
   if (!wide) {
     return (
@@ -77,17 +86,6 @@ export function WorkspaceBrowser({ wide = true, onOpenAddWorkspace }: WorkspaceB
                 <IconSearchOutline16 size={18} />
               </button>
             </Tooltip>
-
-            <Tooltip label="Thêm thư mục làm việc" delayMs={500}>
-              <button
-                type="button"
-                className={css.iconButton}
-                onClick={onOpenAddWorkspace}
-                aria-label="Thêm thư mục"
-              >
-                <FolderPlus size={18} />
-              </button>
-            </Tooltip>
           </div>
         </div>
       </div>
@@ -96,10 +94,10 @@ export function WorkspaceBrowser({ wide = true, onOpenAddWorkspace }: WorkspaceB
 
   return (
     <div className={css.root}>
-      {/* 1. Section Header: Title + Expandable Search + Add Workspace Action */}
+      {/* 1. Section Header: Title "Gần đây" + Expandable Search */}
       <div className={css.sectionHeader}>
         <span className={clsx(css.sectionLabel, searchExpanded && css.sectionLabelHidden)}>
-          Hội thoại
+          Gần đây
         </span>
 
         <div className={clsx(css.searchSlot, searchExpanded && css.searchSlotExpanded)}>
@@ -137,19 +135,6 @@ export function WorkspaceBrowser({ wide = true, onOpenAddWorkspace }: WorkspaceB
             )}
           </div>
         </div>
-
-        <div className={clsx(css.headerActions, searchExpanded && css.headerActionsHidden)}>
-          <Tooltip label="Thêm thư mục làm việc..." delayMs={500}>
-            <button
-              type="button"
-              className={css.iconButton}
-              onClick={onOpenAddWorkspace}
-              aria-label="Thêm thư mục"
-            >
-              <FolderPlus size={16} />
-            </button>
-          </Tooltip>
-        </div>
       </div>
 
       {/* 2. Scrolling Tree / List Area */}
@@ -158,7 +143,7 @@ export function WorkspaceBrowser({ wide = true, onOpenAddWorkspace }: WorkspaceB
           {searchQuery.trim() ? (
             <div className={css.flatList}>
               <div className={css.searchStatus}>
-                Kết quả tìm kiếm cho "{searchQuery}" ({filteredSessions.length})
+                Kết quả ({filteredSessions.length})
               </div>
               {filteredSessions.map((session) => (
                 <SessionRow
@@ -166,7 +151,7 @@ export function WorkspaceBrowser({ wide = true, onOpenAddWorkspace }: WorkspaceB
                   session={session}
                   selected={session.id === activeSessionId}
                   isEditing={editingSessionId === session.id}
-                  onSelect={() => selectSession(session.id)}
+                  onSelect={() => handleSelectSession(session.id)}
                   onRename={() => {
                     setRenameSessionTarget(session)
                     setRenameSessionDraft(session.title)
@@ -183,82 +168,35 @@ export function WorkspaceBrowser({ wide = true, onOpenAddWorkspace }: WorkspaceB
               ))}
             </div>
           ) : (
-            <div className={css.groupSection}>
-              {/* Workspace Folders */}
-              {workspaces.map((ws) => {
-                const wsSessions = sessions.filter((s) => s.workspaceId === ws.id && !s.isArchived)
-                const isOpen = !collapsedWorkspaces[ws.id]
-                const isFolderActive = wsSessions.some((s) => s.id === activeSessionId) || activeWorkspaceId === ws.id
+            <div className={css.flatList}>
+              {filteredSessions.map((session) => (
+                <SessionRow
+                  key={session.id}
+                  session={session}
+                  selected={session.id === activeSessionId}
+                  isEditing={editingSessionId === session.id}
+                  onSelect={() => handleSelectSession(session.id)}
+                  onRename={() => {
+                    setRenameSessionTarget(session)
+                    setRenameSessionDraft(session.title)
+                  }}
+                  onFork={() => forkSession(session.id)}
+                  onArchive={() => archiveSession(session.id)}
+                  onDelete={() => deleteSession(session.id)}
+                  onSaveRename={(title) => {
+                    updateSessionTitle(session.id, title)
+                    setEditingSessionId(null)
+                  }}
+                  onCancelRename={() => setEditingSessionId(null)}
+                />
+              ))}
 
-                return (
-                  <div key={ws.id} style={{ marginBottom: 4 }}>
-                    <ProjectRow
-                      workspace={ws}
-                      sessionCount={wsSessions.length}
-                      open={isOpen}
-                      active={isFolderActive}
-                      onToggle={() => toggleWorkspace(ws.id)}
-                      onSelect={() => {}}
-                      onNewSession={() => newSession(ws.id)}
-                      onDelete={() => setDeleteWsTarget(ws)}
-                    />
-
-                    {isOpen && (
-                      <div style={{ paddingLeft: 14 }}>
-                        {wsSessions.map((session) => (
-                          <SessionRow
-                            key={session.id}
-                            session={session}
-                            selected={session.id === activeSessionId}
-                            isEditing={editingSessionId === session.id}
-                            onSelect={() => selectSession(session.id)}
-                            onRename={() => {
-                              setRenameSessionTarget(session)
-                              setRenameSessionDraft(session.title)
-                            }}
-                            onFork={() => forkSession(session.id)}
-                            onArchive={() => archiveSession(session.id)}
-                            onDelete={() => deleteSession(session.id)}
-                            onSaveRename={(title) => {
-                              updateSessionTitle(session.id, title)
-                              setEditingSessionId(null)
-                            }}
-                            onCancelRename={() => setEditingSessionId(null)}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-
-              {/* Ungrouped Sessions */}
-              {sessions
-                .filter((s) => !s.workspaceId && !s.isArchived)
-                .map((session) => (
-                  <SessionRow
-                    key={session.id}
-                    session={session}
-                    selected={session.id === activeSessionId}
-                    isEditing={editingSessionId === session.id}
-                    onSelect={() => selectSession(session.id)}
-                    onRename={() => {
-                      setRenameSessionTarget(session)
-                      setRenameSessionDraft(session.title)
-                    }}
-                    onFork={() => forkSession(session.id)}
-                    onArchive={() => archiveSession(session.id)}
-                    onDelete={() => deleteSession(session.id)}
-                    onSaveRename={(title) => {
-                      updateSessionTitle(session.id, title)
-                      setEditingSessionId(null)
-                    }}
-                    onCancelRename={() => setEditingSessionId(null)}
-                  />
-                ))}
-
-              {sessions.length === 0 && (
-                <div className={css.empty}>Chưa có cuộc trò chuyện nào</div>
+              {filteredSessions.length === 0 && (
+                <div className={css.empty}>
+                  <p style={{ margin: '8px 0 12px', fontSize: 13, color: 'var(--dsw-alias-label-tertiary)' }}>
+                    Chưa có cuộc trò chuyện nào trong dự án này
+                  </p>
+                </div>
               )}
             </div>
           )}
@@ -306,35 +244,6 @@ export function WorkspaceBrowser({ wide = true, onOpenAddWorkspace }: WorkspaceB
             }
           }}
         />
-      </Modal>
-
-      {/* Delete Workspace Modal */}
-      <Modal
-        open={deleteWsTarget !== null}
-        onClose={() => setDeleteWsTarget(null)}
-        closeLabel="Đóng"
-        title="Xóa thư mục làm việc"
-        description={deleteWsTarget ? `Bạn có chắc chắn muốn xóa thư mục "${deleteWsTarget.name}" và toàn bộ phiên liên kết?` : undefined}
-        footer={(
-          <>
-            <Button variant="outline" onClick={() => setDeleteWsTarget(null)}>Hủy</Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                if (deleteWsTarget) {
-                  deleteWorkspace(deleteWsTarget.id)
-                  setDeleteWsTarget(null)
-                }
-              }}
-            >
-              Xóa thư mục
-            </Button>
-          </>
-        )}
-      >
-        <div style={{ fontSize: 13, color: 'var(--dsw-alias-label-tertiary)' }}>
-          Hành động này sẽ xóa cấu hình thư mục làm việc khỏi danh sách thanh bên.
-        </div>
       </Modal>
     </div>
   )

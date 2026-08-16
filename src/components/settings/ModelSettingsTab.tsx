@@ -1,7 +1,9 @@
-import { Key, Globe, Sliders } from 'lucide-react'
 import { useSettingsStore } from '@/store/useSettingsStore'
 import { useChatStore } from '@/store/useChatStore'
-import { SelectDropdown, Slider } from '@/components/ui'
+import {
+  SelectDropdown, Slider,
+  IconApiOutline14, IconGlobeOutline14, IconPersonalizationOutline16
+} from '@/components/ui'
 import css from './SettingsModal.module.css'
 
 export function ModelSettingsTab() {
@@ -18,7 +20,7 @@ export function ModelSettingsTab() {
     <div className={css.content}>
       <div className={css.formGroup}>
         <label className={css.label}>
-          <Key size={14} style={{ display: 'inline', marginRight: 6 }} />
+          <IconApiOutline14 size={14} style={{ display: 'inline', marginRight: 6 }} />
           API Key (DeepSeek / OpenAI / Custom Provider)
         </label>
         <input
@@ -35,7 +37,7 @@ export function ModelSettingsTab() {
 
       <div className={css.formGroup}>
         <label className={css.label}>
-          <Globe size={14} style={{ display: 'inline', marginRight: 6 }} />
+          <IconGlobeOutline14 size={14} style={{ display: 'inline', marginRight: 6 }} />
           Base URL (API Endpoint)
         </label>
         <input
@@ -68,7 +70,7 @@ export function ModelSettingsTab() {
       <div className={css.formGroup}>
         <div className={css.sliderRow}>
           <label className={css.label} style={{ margin: 0 }}>
-            <Sliders size={14} style={{ display: 'inline', marginRight: 6 }} />
+            <IconPersonalizationOutline16 size={14} style={{ display: 'inline', marginRight: 6 }} />
             Độ sáng tạo (Temperature):
           </label>
           <span className={css.sliderValue}>{temperature}</span>

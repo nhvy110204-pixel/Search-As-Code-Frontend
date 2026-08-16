@@ -66,6 +66,7 @@ export interface WorkspaceFolder {
 export interface ChatSession {
   id: string
   title: string
+  projectId?: string | null
   workspaceId?: string | null
   createdAt: number
   updatedAt: number
@@ -74,6 +75,32 @@ export interface ChatSession {
   isPlanMode?: boolean
   isArchived?: boolean
   stats?: SessionStats
+}
+
+export interface BackendChatSession {
+  id: string
+  user_id: string
+  project_id: string
+  title: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface BackendChatSessionListResponse {
+  items: BackendChatSession[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface BackendChatMessage {
+  id: string
+  session_id: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  reasoning?: string | null
+  tokens?: number
+  created_at: string
 }
 
 export interface ModelOption {

@@ -98,7 +98,7 @@ export function ProjectRow({
             {
               id: 'delete',
               label: 'Xóa thư mục',
-              icon: <IconTrashOutline16 size={14} />,
+              icon: <IconTrashOutline16 size={14} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />,
               danger: true,
             },
           ]}
@@ -209,7 +209,7 @@ export function SessionRow({
             {
               id: 'delete',
               label: 'Xóa hội thoại',
-              icon: <IconTrashOutline16 size={14} />,
+              icon: <IconTrashOutline16 size={14} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />,
               danger: true,
             },
           ]}
