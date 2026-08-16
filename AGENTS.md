@@ -72,3 +72,8 @@ chatbot-web-fe/
 6. **Quy Chuẩn Sử Dụng Icon (Icon Usage Priority)**:
    - **Ưu tiên 1 (Tuyệt đối)**: Luôn ưu tiên sử dụng icon từ `@/components/ui/icons` (hoặc `@/components/ui`) nếu có sẵn (ví dụ: `IconSettingsOutline16`, `IconFolderClose16`, `IconFolderOpen16`, `IconNewChatOutline16`, `IconSearchOutline16`, `IconTrashOutline16`, `IconEditOutline16`, `IconCloseOutline16`, v.v.) để đảm bảo đồng nhất 100% nét vẽ và phong cách Design System đặc trưng.
    - **Ưu tiên 2**: Chỉ khi trong `@/components/ui/icons` **không có sẵn** icon tương ứng thì mới import và sử dụng icon bổ trợ từ thư viện `lucide-react`.
+7. **Quy Chuẩn Sử Dụng Tooltip (Design System Tooltip Standards)**:
+   - **Bắt buộc sử dụng component `<Tooltip>`**: Mọi nút bấm, icon thao tác, chip tương tác hoặc control khi cần hiển thị chú thích/gợi ý khi hover bắt buộc phải bọc bằng component `<Tooltip label="..." delayMs={300}>` từ `@/components/ui` (hoặc `@/components/ui/Tooltip`).
+   - **Tuyệt đối KHÔNG dùng thuộc tính HTML gốc `title="..."`**: Thuộc tính native `title` của trình duyệt hiển thị chậm, không đồng bộ với theme Dark/Light và làm giảm trải nghiệm người dùng cao cấp.
+   - **Cấu hình tiêu chuẩn**: Đặt độ trễ hiển thị `delayMs={300}` (hoặc `delayMs={200-400}`) để tránh popover nhấp nháy khi lướt chuột nhanh.
+

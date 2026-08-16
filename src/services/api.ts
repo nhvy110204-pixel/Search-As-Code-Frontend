@@ -54,7 +54,7 @@ function extractApiErrorMessage(errorData: any, fallbackMessage: string): string
 function handleNetworkError(error: any): never {
   if (error instanceof TypeError && error.message.includes('fetch')) {
     throw new Error(
-      `Không thể kết nối đến máy chủ Backend (${API_BASE_URL}). Vui lòng đảm bảo Backend đã khởi động hoặc bật VITE_ENABLE_MOCK=true trong file .env.`
+      `Không thể kết nối đến máy chủ Backend (${API_BASE_URL}). Vui lòng đảm bảo Backend đã khởi động`
     )
   }
   throw error
@@ -68,7 +68,7 @@ export async function fetchWithAuth(
   options: RequestInit = {}
 ): Promise<Response> {
   const url = endpoint.startsWith('http') ? endpoint : `${API_V1_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`
-  
+
   const token = useAuthStore.getState().accessToken
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string> || {}),
@@ -608,13 +608,13 @@ export async function streamChatMessage(
 
           try {
             const data = JSON.parse(dataStr)
-            
+
             // Server-Sent Events from SaC / LangGraph or OpenAI provider
             if (data.choices?.[0]?.delta?.reasoning_content) {
               callbacks.onThinkingChunk?.(data.choices[0].delta.reasoning_content)
             } else if (data.choices?.[0]?.delta?.content) {
               const contentDelta: string = data.choices[0].delta.content
-              
+
               if (contentDelta.includes('<think>')) {
                 inThinkTag = true
                 const parts = contentDelta.split('<think>')
@@ -688,7 +688,7 @@ async function runMockStreamingEngine(
   signal?: AbortSignal
 ): Promise<void> {
   const lastUserMsg = messages[messages.length - 1]?.content || ''
-  
+
   const thinkingSnippets = [
     `Phân tích câu hỏi: "${lastUserMsg.slice(0, 30)}..."\n`,
     "Truy vấn tài liệu nguồn trong dự án Qdrant...\n",

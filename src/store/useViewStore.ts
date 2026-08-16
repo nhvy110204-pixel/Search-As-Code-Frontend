@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 export type AppView = 'chat' | 'projects'
-export type ProjectDetailTab = 'documents' | 'settings'
+export type ProjectDetailTab = 'documents' | 'analytics' | 'settings'
 
 interface ViewStore {
   currentView: AppView

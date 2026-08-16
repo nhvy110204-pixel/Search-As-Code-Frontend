@@ -21,7 +21,7 @@ interface ProjectStore {
   // Actions
   fetchProjects: () => Promise<void>
   createProject: (name: string, description?: string) => Promise<ProjectResponse>
-  updateProject: (id: string, name?: string, description?: string) => Promise<ProjectResponse>
+  updateProject: (id: string, name?: string, description?: string, settings?: Record<string, any>) => Promise<ProjectResponse>
   deleteProject: (id: string) => Promise<void>
   setActiveProject: (id: string | null) => void
   getActiveProject: () => ProjectResponse | undefined
@@ -141,7 +141,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     return created
   },
 
-  updateProject: async (id: string, name?: string, description?: string) => {
+  updateProject: async (id: string, name?: string, description?: string, settings?: Record<string, any>) => {
     const { isAuthenticated } = useAuthStore.getState()
     if (!isAuthenticated) {
       let updated: ProjectResponse | undefined
@@ -152,6 +152,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             ...p,
             name: name !== undefined ? name : p.name,
             description: description !== undefined ? description : p.description,
+            settings: settings !== undefined ? settings : p.settings,
             updated_at: new Date().toISOString(),
           }
           return updated
@@ -161,7 +162,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       return updated!
     }
 
-    const updated = await projectApi.update(id, { name, description })
+    const updated = await projectApi.update(id, { name, description, settings })
     set((state) => ({
       projects: state.projects.map((p) => (p.id === id ? { ...p, ...updated } : p)),
     }))

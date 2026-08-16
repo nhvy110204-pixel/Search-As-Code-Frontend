@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import {
   HoverCard, IconArchiveOutline20, IconBranchOutline16, IconEditOutline16,
   IconEllipsisOutline16, IconFolderClose16, IconFolderOpen16, IconPlusOutline16,
-  IconTrashOutline16, IconTriangleRightFill14, Menu,
+  IconTrashOutline16, IconTriangleRightFill14, Menu, Tooltip,
 } from '@/components/ui'
 import type { ChatSession, WorkspaceFolder } from '@/types/chat'
 import css from './Rows.module.css'
@@ -56,20 +56,24 @@ export function ProjectRow({
       </span>
 
       <div className={css.projectText}>
-        <span className={css.title} title={workspace.path}>
-          {workspace.name}
-        </span>
+        <Tooltip label={workspace.path} delayMs={300}>
+          <span className={css.title}>
+            {workspace.name}
+          </span>
+        </Tooltip>
       </div>
 
       <div className={css.rowActions} onClick={(e) => e.stopPropagation()}>
-        <button
-          type="button"
-          className={css.iconButton}
-          title="Tạo phiên chat mới trong thư mục này"
-          onClick={onNewSession}
-        >
-          <IconPlusOutline16 size={16} />
-        </button>
+        <Tooltip label="Tạo phiên chat mới" delayMs={300}>
+          <button
+            type="button"
+            className={css.iconButton}
+            onClick={onNewSession}
+            aria-label="Tạo phiên chat mới trong thư mục này"
+          >
+            <IconPlusOutline16 size={16} />
+          </button>
+        </Tooltip>
 
         <Menu
           open={menuOpen}
@@ -77,15 +81,17 @@ export function ProjectRow({
           side="right"
           align="start"
           anchor={
-            <button
-              ref={menuAnchor}
-              type="button"
-              className={css.iconButton}
-              title="Tùy chọn thư mục"
-              onClick={() => setMenuOpen((v) => !v)}
-            >
-              <IconEllipsisOutline16 size={16} />
-            </button>
+            <Tooltip label="Tùy chọn thư mục" delayMs={300}>
+              <button
+                ref={menuAnchor}
+                type="button"
+                className={css.iconButton}
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-label="Tùy chọn thư mục"
+              >
+                <IconEllipsisOutline16 size={16} />
+              </button>
+            </Tooltip>
           }
           onClose={() => setMenuOpen(false)}
           onSelect={handleSelect}
@@ -178,15 +184,17 @@ export function SessionRow({
           side="right"
           align="start"
           anchor={
-            <button
-              ref={menuAnchor}
-              type="button"
-              className={css.iconButton}
-              title="Tùy chọn cuộc trò chuyện"
-              onClick={() => setMenuOpen((v) => !v)}
-            >
-              <IconEllipsisOutline16 size={16} />
-            </button>
+            <Tooltip label="Tùy chọn cuộc trò chuyện" delayMs={300}>
+              <button
+                ref={menuAnchor}
+                type="button"
+                className={css.iconButton}
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-label="Tùy chọn cuộc trò chuyện"
+              >
+                <IconEllipsisOutline16 size={16} />
+              </button>
+            </Tooltip>
           }
           onClose={() => setMenuOpen(false)}
           onSelect={handleSelect}

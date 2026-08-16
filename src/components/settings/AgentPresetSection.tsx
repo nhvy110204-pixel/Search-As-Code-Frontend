@@ -7,6 +7,7 @@ import {
   IconTrashOutline16,
   Modal,
   Button,
+  Tooltip,
 } from '@/components/ui'
 import { useSettingsStore } from '@/store/useSettingsStore'
 import type { AgentPreset } from '@/types/chat'
@@ -175,22 +176,24 @@ systemPrompt: |
                 </button>
 
                 <div className={css.cardFoot}>
-                  <button
-                    type="button"
-                    className={css.iconButton}
-                    title="Xem cấu hình chi tiết (Composition)"
-                    onClick={() => setViewingPreset(row)}
-                  >
-                    <IconBrowseOutline16 size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    className={css.iconButton}
-                    title="Tạo bản sao mới (Copy as custom preset)"
-                    onClick={() => handleBeginCopy(row)}
-                  >
-                    <IconCopyOutline16 size={15} />
-                  </button>
+                  <Tooltip label="Xem cấu hình chi tiết (Composition)" delayMs={300}>
+                    <button
+                      type="button"
+                      className={css.iconButton}
+                      onClick={() => setViewingPreset(row)}
+                    >
+                      <IconBrowseOutline16 size={15} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip label="Tạo bản sao mới (Copy as custom preset)" delayMs={300}>
+                    <button
+                      type="button"
+                      className={css.iconButton}
+                      onClick={() => handleBeginCopy(row)}
+                    >
+                      <IconCopyOutline16 size={15} />
+                    </button>
+                  </Tooltip>
                 </div>
               </li>
             )
@@ -244,39 +247,43 @@ systemPrompt: |
                   </button>
 
                   <div className={css.cardFoot}>
-                    <button
-                      type="button"
-                      className={css.iconButton}
-                      title="Xem cấu hình chi tiết"
-                      onClick={() => setViewingPreset(row)}
-                    >
-                      <IconBrowseOutline16 size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      className={css.iconButton}
-                      title="Mở thư mục lưu trữ"
-                      onClick={() => alert(`Cấu hình được lưu tại: ~/.dsh/presets/${row.id}.yml`)}
-                    >
-                      <IconFolderOpenOutline16 size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      className={css.iconButton}
-                      title="Tạo bản sao"
-                      onClick={() => handleBeginCopy(row)}
-                    >
-                      <IconCopyOutline16 size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      className={css.iconButton}
-                      title="Xóa preset này"
-                      style={{ marginLeft: 'auto', color: 'var(--dsw-alias-state-error-primary)' }}
-                      onClick={() => handleDeleteCustom(row.id)}
-                    >
-                      <IconTrashOutline16 size={15} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />
-                    </button>
+                    <Tooltip label="Xem cấu hình chi tiết" delayMs={300}>
+                      <button
+                        type="button"
+                        className={css.iconButton}
+                        onClick={() => setViewingPreset(row)}
+                      >
+                        <IconBrowseOutline16 size={15} />
+                      </button>
+                    </Tooltip>
+                    <Tooltip label="Mở thư mục lưu trữ" delayMs={300}>
+                      <button
+                        type="button"
+                        className={css.iconButton}
+                        onClick={() => alert(`Cấu hình được lưu tại: ~/.dsh/presets/${row.id}.yml`)}
+                      >
+                        <IconFolderOpenOutline16 size={15} />
+                      </button>
+                    </Tooltip>
+                    <Tooltip label="Tạo bản sao" delayMs={300}>
+                      <button
+                        type="button"
+                        className={css.iconButton}
+                        onClick={() => handleBeginCopy(row)}
+                      >
+                        <IconCopyOutline16 size={15} />
+                      </button>
+                    </Tooltip>
+                    <Tooltip label="Xóa preset này" delayMs={300}>
+                      <button
+                        type="button"
+                        className={css.iconButton}
+                        style={{ marginLeft: 'auto', color: 'var(--dsw-alias-state-error-primary)' }}
+                        onClick={() => handleDeleteCustom(row.id)}
+                      >
+                        <IconTrashOutline16 size={15} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />
+                      </button>
+                    </Tooltip>
                   </div>
                 </li>
               )

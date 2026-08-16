@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSettingsStore } from '@/store/useSettingsStore'
-import { Button, IconPlusOutline16, IconTrashOutline16, IconCheckOutline16 } from '@/components/ui'
+import { Button, Tooltip, IconPlusOutline16, IconTrashOutline16, IconCheckOutline16 } from '@/components/ui'
 import type { AgentPreset } from '@/types/chat'
 import css from './SettingsModal.module.css'
 
@@ -90,17 +90,19 @@ export function PresetsSettingsTab() {
                   <div className={css.description}>{preset.description}</div>
                 </div>
                 {preset.id.startsWith('preset-') && (
-                  <button
-                    type="button"
-                    style={{ border: 'none', background: 'transparent', color: 'var(--dsw-alias-state-error-primary)', cursor: 'pointer' }}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      deletePreset(preset.id)
-                    }}
-                    title="Xóa vai trò"
-                  >
-                    <IconTrashOutline16 size={14} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />
-                  </button>
+                  <Tooltip label="Xóa vai trò này" delayMs={300}>
+                    <button
+                      type="button"
+                      style={{ border: 'none', background: 'transparent', color: 'var(--dsw-alias-state-error-primary)', cursor: 'pointer' }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        deletePreset(preset.id)
+                      }}
+                      aria-label="Xóa vai trò"
+                    >
+                      <IconTrashOutline16 size={14} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />
+                    </button>
+                  </Tooltip>
                 )}
               </div>
             )

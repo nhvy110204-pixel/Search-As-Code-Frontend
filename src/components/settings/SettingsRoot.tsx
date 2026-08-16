@@ -2,7 +2,7 @@ import { useEffect, useId, useRef } from 'react'
 import clsx from 'clsx'
 import {
   IconSettingsOutline16, IconDataOutline16, IconAgentPresetOutline16,
-  IconPersonalizationOutline16, IconCloseOutline16
+  IconPersonalizationOutline16, IconCloseOutline16, Tooltip
 } from '@/components/ui'
 import { useSettingsStore } from '@/store/useSettingsStore'
 import { AppearanceRow } from './AppearanceRow'
@@ -42,16 +42,17 @@ export function SettingsRoot() {
 
       <div className={css.panel} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         {/* Top-Right Close Button */}
-        <button
-          ref={closeButtonRef}
-          type="button"
-          className={css.close}
-          onClick={closeSettings}
-          aria-label="Đóng cài đặt"
-          title="Đóng (Esc)"
-        >
-          <IconCloseOutline16 size={16} />
-        </button>
+        <Tooltip label="Đóng (Esc)" delayMs={300}>
+          <button
+            ref={closeButtonRef}
+            type="button"
+            className={css.close}
+            onClick={closeSettings}
+            aria-label="Đóng cài đặt"
+          >
+            <IconCloseOutline16 size={16} />
+          </button>
+        </Tooltip>
 
         {/* Left Nav Rail (188px) */}
         <nav className={css.nav}>

@@ -53,10 +53,10 @@ export function UserProfileModal() {
   const initialLetter = (user.full_name || user.username || 'U').charAt(0).toUpperCase()
   const formattedDate = user.created_at
     ? new Date(user.created_at).toLocaleDateString('vi-VN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
     : 'Không xác định'
 
   return (
@@ -170,10 +170,6 @@ export function UserProfileModal() {
             <div className={css.section}>
               <span className={css.sectionTitle}>Thông tin hệ thống</span>
               <div className={css.metaList}>
-                <div className={css.metaRow}>
-                  <span className={css.metaKey}>User ID:</span>
-                  <span className={css.metaVal}>{user.id}</span>
-                </div>
                 <div className={css.metaRow}>
                   <span className={css.metaKey}>Ngày tham gia:</span>
                   <span className={css.metaVal}>{formattedDate}</span>

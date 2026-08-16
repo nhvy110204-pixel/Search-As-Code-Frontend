@@ -88,38 +88,41 @@ export function HeaderSettingsPopover() {
         >
           {/* 1. Theme Mode Switcher */}
           <div className={css.themeRow} role="radiogroup" aria-label="Chọn chủ đề giao diện">
-            <button
-              type="button"
-              className={css.themeBtn}
-              data-active={theme === 'light' || undefined}
-              onClick={() => setTheme('light')}
-              title="Chủ đề Sáng (Light)"
-              aria-label="Light mode"
-            >
-              <IconLightOutline16 size={17} />
-            </button>
+            <Tooltip label="Chủ đề Sáng (Light)" delayMs={300}>
+              <button
+                type="button"
+                className={css.themeBtn}
+                data-active={theme === 'light' || undefined}
+                onClick={() => setTheme('light')}
+                aria-label="Light mode"
+              >
+                <IconLightOutline16 size={17} />
+              </button>
+            </Tooltip>
 
-            <button
-              type="button"
-              className={css.themeBtn}
-              data-active={theme === 'dark' || undefined}
-              onClick={() => setTheme('dark')}
-              title="Chủ đề Tối (Dark)"
-              aria-label="Dark mode"
-            >
-              <IconDarkOutline16 size={17} />
-            </button>
+            <Tooltip label="Chủ đề Tối (Dark)" delayMs={300}>
+              <button
+                type="button"
+                className={css.themeBtn}
+                data-active={theme === 'dark' || undefined}
+                onClick={() => setTheme('dark')}
+                aria-label="Dark mode"
+              >
+                <IconDarkOutline16 size={17} />
+              </button>
+            </Tooltip>
 
-            <button
-              type="button"
-              className={css.themeBtn}
-              data-active={theme === 'system' || undefined}
-              onClick={() => setTheme('system')}
-              title="Tự động theo Hệ thống (System)"
-              aria-label="System mode"
-            >
-              <IconFollowsystemOutline16 size={17} />
-            </button>
+            <Tooltip label="Tự động theo Hệ thống (System)" delayMs={300}>
+              <button
+                type="button"
+                className={css.themeBtn}
+                data-active={theme === 'system' || undefined}
+                onClick={() => setTheme('system')}
+                aria-label="System mode"
+              >
+                <IconFollowsystemOutline16 size={17} />
+              </button>
+            </Tooltip>
           </div>
 
           <div className={css.divider} />

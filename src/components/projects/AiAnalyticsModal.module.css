@@ -1,0 +1,405 @@
+/* AiAnalyticsModal Styles */
+.modalContainer {
+  max-width: 740px !important;
+  width: 95% !important;
+  padding: 0 !important;
+  border-radius: var(--dsw-radius-panel, 20px) !important;
+  overflow: hidden !important;
+  background: var(--dsw-alias-bg-layer-1) !important;
+  border: 1px solid var(--dsw-alias-border-l1) !important;
+  box-shadow: var(--dsw-shadow-lv4, 0 16px 40px rgba(0, 0, 0, 0.18)) !important;
+}
+
+.modalShell {
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+
+/* 1. Top Bar */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background: var(--dsw-alias-bg-layer-2);
+  border-bottom: 1px solid var(--dsw-alias-border-l1);
+}
+
+.topBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.sparkleBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--dsw-alias-interactive-bg-active);
+  color: var(--dsw-alias-brand-primary);
+  flex: none;
+}
+
+.sparkleIcon {
+  color: var(--dsw-alias-brand-primary);
+}
+
+.modalTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--dsw-alias-label-primary);
+  margin: 0 0 2px 0;
+  letter-spacing: -0.01em;
+}
+
+.modalSubtitle {
+  font-size: 12.5px;
+  color: var(--dsw-alias-label-tertiary);
+  margin: 0;
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: all var(--ds-transition-duration-fast) ease;
+}
+
+.closeBtn:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+/* 2. Modal Body */
+.modalBody {
+  padding: 24px;
+  overflow-y: auto;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* STATE 1: EMPTY STATE */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  gap: 12px;
+  margin: auto;
+}
+
+.emptyIconCircle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--dsw-alias-bg-layer-2);
+  border: 1px solid var(--dsw-alias-border-l2);
+  color: var(--dsw-alias-brand-primary);
+  margin-bottom: 4px;
+}
+
+.emptyIcon {
+  color: var(--dsw-alias-brand-primary);
+}
+
+.emptyTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--dsw-alias-label-primary);
+  margin: 0;
+}
+
+.emptyDesc {
+  font-size: 13.5px;
+  color: var(--dsw-alias-label-secondary);
+  max-width: 520px;
+  line-height: 1.55;
+  margin: 0 0 10px 0;
+}
+
+.startBtn {
+  padding: 10px 24px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+
+/* STATE 2: ANALYZING STATE */
+.analyzingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 50px 20px;
+  gap: 16px;
+  margin: auto;
+}
+
+.radarWrap {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radarRing {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--dsw-alias-brand-primary);
+  opacity: 0.3;
+  animation: pulseRadar 1.8s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+
+.radarCore {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--dsw-alias-interactive-bg-active);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dsw-alias-brand-primary);
+}
+
+.pulseSparkle {
+  animation: rotateSparkle 2.5s ease-in-out infinite;
+}
+
+@keyframes pulseRadar {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes rotateSparkle {
+  0% { transform: rotate(0deg) scale(0.9); }
+  50% { transform: rotate(180deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(0.9); }
+}
+
+.analyzingTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--dsw-alias-label-primary);
+  margin: 0;
+}
+
+.analyzingDesc {
+  font-size: 13.5px;
+  color: var(--dsw-alias-brand-primary);
+  font-weight: 500;
+  margin: 0;
+}
+
+/* STATE 3: RESULT REPORT */
+.reportContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Health Banner */
+.healthBanner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 20px;
+  border-radius: var(--dsw-radius-md, 12px);
+  background: var(--dsw-alias-bg-layer-2);
+  border: 1px solid var(--dsw-alias-border-l1);
+}
+
+.healthScoreBlock {
+  display: flex;
+  align-items: baseline;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--dsw-static-green-600);
+}
+
+.healthScoreNum {
+  font-size: 28px;
+  font-weight: 800;
+  font-family: var(--ds-font-family-code);
+  letter-spacing: -0.03em;
+}
+
+.healthScoreMax {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+.healthTextWrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.healthTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.healthStatusBadge {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dsw-static-green-600);
+}
+
+.healthTimeText {
+  font-size: 11.5px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.healthSummary {
+  font-size: 13px;
+  color: var(--dsw-alias-label-secondary);
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* 3 Sections Grid */
+.sectionsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-2);
+  border: 1px solid var(--dsw-alias-border-l1);
+}
+
+.recCard {
+  background: var(--dsw-alias-interactive-bg-active);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dsw-alias-label-primary);
+  margin: 0;
+}
+
+.greenIcon { color: var(--dsw-static-green-600); }
+.warnIcon { color: #f59e0b; }
+.brandIcon { color: var(--dsw-alias-brand-primary); }
+
+.bulletList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bulletItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--dsw-alias-label-secondary);
+  line-height: 1.5;
+}
+
+.greenBullet {
+  color: var(--dsw-static-green-600);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.5;
+  flex: none;
+}
+
+.warnBullet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.16);
+  color: #d97706;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1;
+  flex: none;
+  margin-top: 2px;
+}
+
+.recBullet {
+  font-size: 13px;
+  flex: none;
+  line-height: 1.5;
+}
+
+/* 3. Modal Footer */
+.modalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  background: var(--dsw-alias-bg-layer-2);
+  border-top: 1px solid var(--dsw-alias-border-l1);
+}
+
+.footerLeft {
+  font-size: 12px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.footerTimestamp {
+  font-style: italic;
+}
+
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

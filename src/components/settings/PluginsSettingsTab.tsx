@@ -1,6 +1,6 @@
 import { useSettingsStore } from '@/store/useSettingsStore'
 import {
-  Button, Switch,
+  Button, Switch, Tooltip,
   IconGlobeOutline14, IconCodeOutline16, IconCordisPluginOutline14,
   IconPlusOutline16, IconTrashOutline16
 } from '@/components/ui'
@@ -85,14 +85,16 @@ export function PluginsSettingsTab() {
                   checked={server.enabled}
                   onChange={() => toggleMcpServer(idx)}
                 />
-                <button
-                  type="button"
-                  style={{ border: 'none', background: 'transparent', color: 'var(--dsw-alias-state-error-primary)', cursor: 'pointer', padding: 4 }}
-                  onClick={() => deleteMcpServer(idx)}
-                  title="Xóa máy chủ"
-                >
-                  <IconTrashOutline16 size={14} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />
-                </button>
+                <Tooltip label="Xóa máy chủ" delayMs={300}>
+                  <button
+                    type="button"
+                    style={{ border: 'none', background: 'transparent', color: 'var(--dsw-alias-state-error-primary)', cursor: 'pointer', padding: 4 }}
+                    onClick={() => deleteMcpServer(idx)}
+                    aria-label="Xóa máy chủ"
+                  >
+                    <IconTrashOutline16 size={14} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />
+                  </button>
+                </Tooltip>
               </div>
             </div>
           ))}

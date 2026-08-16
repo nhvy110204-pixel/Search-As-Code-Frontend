@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import {
-  Button, Modal, Menu, Pill, Input,
+  Button, Modal, Menu, Pill, Input, Tooltip,
   IconPlusOutline16, IconSearchOutline16, IconEllipsisOutline16,
   IconBrowseOutline16, IconEditOutline16, IconTrashOutline16, IconQueueOutline14
 } from '@/components/ui'
@@ -66,7 +66,7 @@ export function ProjectsHub() {
       <div className={css.container}>
         {/* 1. Header Bar: "Dự án" left, "Tìm dự án" right */}
         <div className={css.headerBar}>
-          <h1 className={css.pageHeading}>Dự án</h1>
+          <h2 className={css.pageHeading}>Dự án</h2>
 
           <div className={css.searchWrapper}>
             <IconSearchOutline16 size={15} className={css.searchIcon} />
@@ -101,7 +101,9 @@ export function ProjectsHub() {
               onClick={() => handleOpenSources(project)}
             >
               <div className={css.cardHeader}>
-                <h3 className={css.cardTitle} title={project.name}>{project.name}</h3>
+                <Tooltip label={project.name} delayMs={300}>
+                  <h3 className={css.cardTitle}>{project.name}</h3>
+                </Tooltip>
                 <Menu
                   open={menuOpenId === project.id}
                   onClose={() => setMenuOpenId(null)}
@@ -109,17 +111,20 @@ export function ProjectsHub() {
                   side="bottom"
                   align="end"
                   anchor={
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      style={{ padding: 4 }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setMenuOpenId((cur) => (cur === project.id ? null : project.id))
-                      }}
-                    >
-                      <IconEllipsisOutline16 size={16} />
-                    </Button>
+                    <Tooltip label="Tùy chọn dự án" delayMs={300}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        style={{ padding: 4 }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setMenuOpenId(menuOpenId === project.id ? null : project.id)
+                        }}
+                        aria-label="Tùy chọn dự án"
+                      >
+                        <IconEllipsisOutline16 size={16} />
+                      </Button>
+                    </Tooltip>
                   }
                   items={[
                     {
@@ -182,7 +187,7 @@ export function ProjectsHub() {
                       handleOpenChat(project)
                     }}
                   >
-                    Vào Chat
+                    Chat
                   </Button>
                 </div>
               </div>

@@ -1,14 +1,19 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import {
-  Button, Modal, Pill, Input,
+  Button, Modal, Pill, Input, Menu, Tooltip,
   IconSettingsOutline16, IconChevronLeftOutline14, IconBrowseOutline16,
   IconTrashOutline16, IconCheckOutline16, IconWarningOutline16,
-  IconLoadingOutline16, IconDownloadOutline16
+  IconLoadingOutline16, IconDownloadOutline16, IconEllipsisOutline16,
+  IconInspectOutline12, IconPlusOutline16, IconCloseOutline16,
+  IconDataOutline16
 } from '@/components/ui'
 import { useProjectStore } from '@/store/useProjectStore'
 import { useChatStore } from '@/store/useChatStore'
 import { useViewStore } from '@/store/useViewStore'
 import { DocumentPreviewModal } from './DocumentPreviewModal'
+import { DocumentDetailModal } from './DocumentDetailModal'
+import { ProjectSettingsView } from './ProjectSettingsView'
+import { ProjectAnalyticsView } from './ProjectAnalyticsView'
 import type { DocumentResponse } from '@/types/project'
 import css from './ProjectDetailView.module.css'
 
@@ -35,6 +40,7 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
     uploadFiles,
     deleteDocument,
     updateProject,
+    deleteProject,
     setActiveProject,
   } = useProjectStore()
 
@@ -59,21 +65,15 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Preview & Delete targets
+  // Preview, Detail & Delete targets
   const [previewDocId, setPreviewDocId] = useState<string | null>(null)
   const [deletingDoc, setDeletingDoc] = useState<DocumentResponse | null>(null)
+  const [detailDoc, setDetailDoc] = useState<DocumentResponse | null>(null)
+  const [menuOpenDocId, setMenuOpenDocId] = useState<string | null>(null)
 
-  // Settings tab form state
-  const [editName, setEditName] = useState('')
-  const [editDesc, setEditDesc] = useState('')
-  const [isSavingSettings, setIsSavingSettings] = useState(false)
-
-  useEffect(() => {
-    if (project) {
-      setEditName(project.name)
-      setEditDesc(project.description || '')
-    }
-  }, [project])
+  const [showUploadDropzone, setShowUploadDropzone] = useState(false)
+  const hasDocuments = projectDocs.length > 0 || queueItems.length > 0
+  const isUploadVisible = !hasDocuments || showUploadDropzone
 
   useEffect(() => {
     fetchDocuments(projectId)
@@ -83,6 +83,7 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
     if (!files || files.length === 0) return
     const fileArray = Array.from(files)
     uploadFiles(projectId, fileArray)
+    setShowUploadDropzone(false)
   }
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -97,17 +98,6 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
     setActiveProject(projectId)
     newSession(projectId)
     navigateToChat()
-  }
-
-  const handleSaveSettings = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editName.trim()) return
-    setIsSavingSettings(true)
-    try {
-      await updateProject(projectId, editName.trim(), editDesc.trim() || undefined)
-    } finally {
-      setIsSavingSettings(false)
-    }
   }
 
   const handleDeleteConfirm = async () => {
@@ -132,29 +122,71 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
   return (
     <div className={css.root}>
       <div className={css.container}>
-        {/* 1. Back Navigation Row */}
-        <div className={css.backRow}>
-          <button className={css.backButton} onClick={() => navigateToProjects()}>
-            <IconChevronLeftOutline14 size={16} />
-            <span>Quay lại danh sách dự án</span>
-          </button>
-        </div>
-
-        {/* 2. Project Header */}
+        {/* Project Header with integrated back button on title hover */}
         <div className={css.header}>
           <div className={css.titleGroup}>
-            <h1 className={css.title}>{project.name}</h1>
+            <div className={css.titleWrapper}>
+              <Tooltip label="Quay lại danh sách dự án" side="top" delayMs={200}>
+                <span className={css.tooltipAnchor}>
+                  <button
+                    type="button"
+                    className={css.titleBackButton}
+                    onClick={() => navigateToProjects()}
+                    aria-label="Quay lại danh sách dự án"
+                  >
+                    {/* Normal State: Only project name */}
+                    <span className={css.titleNormal}>
+                      <h1 className={css.title}>{project.name}</h1>
+                    </span>
+
+                    {/* Hover State: Icon with circle background */}
+                    <span className={css.titleHover}>
+                      <span className={css.backIconCircle}>
+                        <IconChevronLeftOutline14 size={18} className={css.backIcon} />
+                      </span>
+                    </span>
+                  </button>
+                </span>
+              </Tooltip>
+            </div>
             <p className={css.description}>
               {project.description || 'Chưa có mô tả chi tiết cho dự án này.'}
             </p>
           </div>
-          <Button variant="primary" onClick={handleStartChat}>
-            <span>Bắt đầu trò chuyện</span>
-          </Button>
+          <div className={css.headerActions}>
+            {hasDocuments && (
+              <Tooltip label={showUploadDropzone ? 'Thu gọn khung tải lên' : 'Tải thêm tài liệu vào dự án'} delayMs={300}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowUploadDropzone((prev) => !prev)
+                    if (detailTab !== 'documents') {
+                      setDetailTab('documents')
+                    }
+                  }}
+                >
+                  <IconPlusOutline16 size={15} style={{ marginRight: 6 }} />
+                  <span>Tải tài liệu lên</span>
+                </Button>
+              </Tooltip>
+            )}
+            <Tooltip label="Tạo phiên trò chuyện mới với tài liệu dự án này" delayMs={300}>
+              <Button variant="primary" onClick={handleStartChat}>
+                <span>Bắt đầu trò chuyện</span>
+              </Button>
+            </Tooltip>
+          </div>
         </div>
 
         {/* 3. Tabs Navigation */}
         <div className={css.tabsBar}>
+          <button
+            className={`${css.tabItem} ${detailTab === 'analytics' ? css.tabItemActive : ''}`}
+            onClick={() => setDetailTab('analytics')}
+          >
+            <IconDataOutline16 size={15} />
+            <span>Chỉ số & Phân tích</span>
+          </button>
           <button
             className={`${css.tabItem} ${detailTab === 'documents' ? css.tabItemActive : ''}`}
             onClick={() => setDetailTab('documents')}
@@ -174,38 +206,55 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
         {/* 4. Tab 1: Documents Management */}
         {detailTab === 'documents' && (
           <>
-            {/* Smart Dropzone */}
-            <div
-              className={`${css.dropzone} ${isDragging ? css.dropzoneActive : ''}`}
-              onDragOver={(e) => {
-                e.preventDefault()
-                setIsDragging(true)
-              }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept=".pdf,.docx,.doc,.txt,.md"
-                style={{ display: 'none' }}
-                onChange={(e) => handleFilesSelected(e.target.files)}
-              />
-              <div className={css.dropzoneIcon}>
-                <IconDownloadOutline16 size={26} style={{ transform: 'rotate(180deg)' }} />
+            {/* Smart Dropzone: Shown by default if no documents, or toggled via button if documents exist */}
+            {isUploadVisible && (
+              <div
+                className={`${css.dropzone} ${isDragging ? css.dropzoneActive : ''}`}
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setIsDragging(true)
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {hasDocuments && (
+                  <Tooltip label="Đóng khung tải lên" delayMs={300}>
+                    <button
+                      type="button"
+                      className={css.dropzoneCloseBtn}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setShowUploadDropzone(false)
+                      }}
+                      aria-label="Đóng khung tải lên"
+                    >
+                      <IconCloseOutline16 size={14} />
+                    </button>
+                  </Tooltip>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.docx,.doc,.txt,.md"
+                  style={{ display: 'none' }}
+                  onChange={(e) => handleFilesSelected(e.target.files)}
+                />
+                <div className={css.dropzoneIcon}>
+                  <IconDownloadOutline16 size={26} style={{ transform: 'rotate(180deg)' }} />
+                </div>
+                <div className={css.dropzoneTitle}>
+                  Kéo thả tài liệu vào đây hoặc nhấp để duyệt file
+                </div>
+                <div className={css.dropzoneSubtitle}>
+                  Hỗ trợ định dạng PDF, Word (DOCX/DOC), TXT, Markdown (Tối đa 50MB/file)
+                </div>
+                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click() }}>
+                  Chọn file từ máy tính
+                </Button>
               </div>
-              <div className={css.dropzoneTitle}>
-                Kéo thả tài liệu vào đây hoặc nhấp để duyệt file
-              </div>
-              <div className={css.dropzoneSubtitle}>
-                Hỗ trợ định dạng PDF, Word (DOCX/DOC), TXT, Markdown (Tối đa 50MB/file)
-              </div>
-              <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click() }}>
-                Chọn file từ máy tính
-              </Button>
-            </div>
+            )}
 
             {/* Real-time Upload Progress Queue */}
             {queueItems.length > 0 && (
@@ -271,9 +320,9 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
               <div className={css.tableHeaderRow}>
                 <span>Tên tài liệu</span>
                 <span>Kích thước</span>
-                <span>Số Chunks</span>
+                <span>Chunks</span>
                 <span>Trạng thái</span>
-                <span style={{ textAlign: 'right' }}>Hành động</span>
+                <span style={{ textAlign: 'right' }}></span>
               </div>
 
               {isLoadingDocuments[projectId] ? (
@@ -287,9 +336,11 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
                   <div key={doc.id} className={css.tableRow}>
                     <div className={css.docNameCell}>
                       <IconBrowseOutline16 size={18} className={css.docIcon} />
-                      <span className={css.docTitle} title={doc.file_name}>
-                        {doc.file_name}
-                      </span>
+                      <Tooltip label={doc.file_name} delayMs={300}>
+                        <span className={css.docTitle}>
+                          {doc.file_name}
+                        </span>
+                      </Tooltip>
                     </div>
 
                     <div style={{ color: 'var(--dsw-alias-label-secondary)' }}>
@@ -309,32 +360,70 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
                         </Pill>
                       ) : doc.status === 'processing' || doc.status === 'pending' ? (
                         <Pill style={{ color: 'var(--dsw-static-amber-500)' }}>
-                          ⏳ Đang xử lý
+                          Đang xử lý
                         </Pill>
                       ) : (
                         <Pill style={{ color: 'var(--dsw-static-red-500)' }}>
-                          ❌ Lỗi
+                          Lỗi
                         </Pill>
                       )}
                     </div>
 
                     <div className={css.actionsCell}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        title="Xem trước Markdown đã bóc tách"
-                        onClick={() => setPreviewDocId(doc.id)}
-                      >
-                        <IconBrowseOutline16 size={15} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        title="Xóa tài liệu khỏi dự án"
-                        onClick={() => setDeletingDoc(doc)}
-                      >
-                        <IconTrashOutline16 size={15} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />
-                      </Button>
+                      <Menu
+                        open={menuOpenDocId === doc.id}
+                        onClose={() => setMenuOpenDocId(null)}
+                        align="end"
+                        portal
+                        anchor={
+                          <Tooltip label="Tùy chọn tài liệu" delayMs={300}>
+                            <button
+                              type="button"
+                              className={css.menuButton}
+                              data-active={menuOpenDocId === doc.id}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setMenuOpenDocId(menuOpenDocId === doc.id ? null : doc.id)
+                              }}
+                              aria-label="Tùy chọn tài liệu"
+                            >
+                              <IconEllipsisOutline16 size={16} />
+                            </button>
+                          </Tooltip>
+                        }
+                        items={[
+                          {
+                            id: 'detail',
+                            label: 'Chi tiết tài liệu & Chunks',
+                            icon: <IconInspectOutline12 size={14} />,
+                          },
+                          {
+                            id: 'preview',
+                            label: 'Xem trước nội dung',
+                            icon: <IconBrowseOutline16 size={14} />,
+                          },
+                          {
+                            type: 'separator',
+                            id: `sep-${doc.id}`,
+                          },
+                          {
+                            id: 'delete',
+                            label: 'Xóa tài liệu',
+                            icon: <IconTrashOutline16 size={14} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />,
+                            danger: true,
+                          },
+                        ]}
+                        onSelect={(actionId) => {
+                          setMenuOpenDocId(null)
+                          if (actionId === 'preview') {
+                            setPreviewDocId(doc.id)
+                          } else if (actionId === 'detail') {
+                            setDetailDoc(doc)
+                          } else if (actionId === 'delete') {
+                            setDeletingDoc(doc)
+                          }
+                        }}
+                      />
                     </div>
                   </div>
                 ))
@@ -343,62 +432,40 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
           </>
         )}
 
-        {/* 5. Tab 2: Settings */}
+        {/* 5. Tab 2: Analytics & Insights */}
+        {detailTab === 'analytics' && (
+          <ProjectAnalyticsView
+            project={project}
+            documents={projectDocs}
+          />
+        )}
+
+        {/* 6. Tab 3: Settings (Embedded 2-Column SaC Settings) */}
         {detailTab === 'settings' && (
-          <form
-            onSubmit={handleSaveSettings}
-            style={{
-              maxWidth: 600,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 20,
-              padding: 24,
-              borderRadius: 'var(--dsw-radius-lg, 16px)',
-              background: 'var(--dsw-alias-bg-layer-1)',
-              border: '1px solid var(--dsw-alias-border-l2)',
+          <ProjectSettingsView
+            project={project}
+            onUpdate={async (data) => {
+              await updateProject(projectId, data.name, data.description || undefined, data.settings)
             }}
-          >
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 550, marginBottom: 6 }}>
-                Tên dự án
-              </label>
-              <Input value={editName} onChange={(e) => setEditName(e.target.value)} required />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 550, marginBottom: 6 }}>
-                Mô tả dự án
-              </label>
-              <textarea
-                value={editDesc}
-                onChange={(e) => setEditDesc(e.target.value)}
-                rows={3}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: 10,
-                  border: '1px solid var(--dsw-alias-border-l2)',
-                  background: 'var(--dsw-alias-bg-module-platform)',
-                  color: 'var(--dsw-alias-label-primary)',
-                  fontFamily: 'var(--dsw-font-family)',
-                  fontSize: 14,
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-              <Button variant="primary" disabled={!editName.trim() || isSavingSettings}>
-                {isSavingSettings ? 'Đang lưu...' : 'Lưu cấu hình'}
-              </Button>
-            </div>
-          </form>
+            onDelete={async () => {
+              await deleteProject(projectId)
+              navigateToProjects()
+            }}
+          />
         )}
 
         {/* Markdown Preview Modal */}
         <DocumentPreviewModal
           documentId={previewDocId}
           onClose={() => setPreviewDocId(null)}
+        />
+
+        {/* Document Details Modal (Settings-styled with Chunk Search) */}
+        <DocumentDetailModal
+          document={detailDoc}
+          open={detailDoc !== null}
+          onClose={() => setDetailDoc(null)}
+          onOpenPreview={(id) => setPreviewDocId(id)}
         />
 
         {/* Delete Document Modal */}

@@ -5,6 +5,7 @@ import {
   IconTrashOutline16,
   Button,
   Modal,
+  Tooltip,
 } from '@/components/ui'
 import { useSettingsStore } from '@/store/useSettingsStore'
 import css from './ModelsSection.module.css'
@@ -131,14 +132,15 @@ export function ModelsSection() {
               {/* Row Header */}
               <div className={css.rowHead}>
                 <div className={css.rowIdentity}>
-                  <span
-                    className={
-                      p.configured
-                        ? `${css.credentialDot} ${css.credentialDotConfigured}`
-                        : `${css.credentialDot} ${css.credentialDotMissing}`
-                    }
-                    title={p.configured ? 'Đã cấu hình API key hợp lệ' : 'Chưa có API key'}
-                  />
+                  <Tooltip label={p.configured ? 'Đã cấu hình API key hợp lệ' : 'Chưa có API key'} delayMs={300}>
+                    <span
+                      className={
+                        p.configured
+                          ? `${css.credentialDot} ${css.credentialDotConfigured}`
+                          : `${css.credentialDot} ${css.credentialDotMissing}`
+                      }
+                    />
+                  </Tooltip>
                   <span className={css.rowName}>{p.displayName}</span>
                   {p.tag && <span className={css.rowTag}>{p.tag}</span>}
                 </div>
@@ -153,15 +155,17 @@ export function ModelsSection() {
                   </button>
 
                   {!p.isOfficial && (
-                    <button
-                      type="button"
-                      className={css.editButton}
-                      style={{ color: 'var(--dsw-alias-state-error-primary)', borderColor: 'transparent' }}
-                      title="Xóa nhà cung cấp"
-                      onClick={() => handleDeleteProvider(p.id)}
-                    >
-                      <IconTrashOutline16 size={14} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />
-                    </button>
+                    <Tooltip label="Xóa nhà cung cấp" delayMs={300}>
+                      <button
+                        type="button"
+                        className={css.editButton}
+                        style={{ color: 'var(--dsw-alias-state-error-primary)', borderColor: 'transparent' }}
+                        aria-label="Xóa nhà cung cấp"
+                        onClick={() => handleDeleteProvider(p.id)}
+                      >
+                        <IconTrashOutline16 size={14} style={{ color: 'var(--dsw-alias-state-error-primary)' }} />
+                      </button>
+                    </Tooltip>
                   )}
                 </div>
               </div>

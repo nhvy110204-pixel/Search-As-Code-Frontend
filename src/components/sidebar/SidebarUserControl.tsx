@@ -69,7 +69,7 @@ export function SidebarUserControl({ wide }: SidebarUserControlProps) {
     },
     {
       id: 'settings',
-      label: 'Cài đặt hệ thống',
+      label: 'Cài đặt ',
       icon: <IconSettingsOutline14 size={15} />,
     },
     {
@@ -78,7 +78,7 @@ export function SidebarUserControl({ wide }: SidebarUserControlProps) {
     },
     {
       id: 'logout',
-      label: 'Đăng xuất tài khoản',
+      label: 'Đăng xuất',
       icon: <IconRightUpOutline14 size={15} />,
       danger: true,
     },

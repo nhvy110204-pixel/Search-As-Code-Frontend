@@ -4,6 +4,7 @@ import {
   IconCheckOutline16,
   IconChevronDownOutline14,
   IconChevronRightOutline14,
+  Tooltip,
 } from '@/components/ui'
 import type { ModelOption } from '@/types/chat'
 import css from './ModelSelect.module.css'
@@ -101,28 +102,29 @@ export function ModelSelect({
   return (
     <div ref={rootRef} className={css.root} onKeyDown={onRootKeyDown} onBlur={onBlur}>
       {/* Trigger Button (Figma 313:14108) */}
-      <button
-        ref={triggerRef}
-        type="button"
-        className={css.trigger}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        disabled={locked}
-        title={effortLabel ? `${modelLabel} · ${effortLabel}` : modelLabel}
-        onClick={() => {
-          if (open) {
-            setOpen(false)
-            setPane('root')
-          } else {
-            setPane('root')
-            setOpen(true)
-          }
-        }}
-      >
-        <span className={css.triggerLabel}>{modelLabel}</span>
-        {effortLabel && <span className={css.triggerEffort}>· {effortLabel}</span>}
-        <IconChevronDownOutline14 className={clsx(css.chevron, open && css.chevronOpen)} />
-      </button>
+      <Tooltip label={effortLabel ? `${modelLabel} · ${effortLabel}` : modelLabel} delayMs={300}>
+        <button
+          ref={triggerRef}
+          type="button"
+          className={css.trigger}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          disabled={locked}
+          onClick={() => {
+            if (open) {
+              setOpen(false)
+              setPane('root')
+            } else {
+              setPane('root')
+              setOpen(true)
+            }
+          }}
+        >
+          <span className={css.triggerLabel}>{modelLabel}</span>
+          {effortLabel && <span className={css.triggerEffort}>· {effortLabel}</span>}
+          <IconChevronDownOutline14 className={clsx(css.chevron, open && css.chevronOpen)} />
+        </button>
+      </Tooltip>
 
       {/* Two-Level Menu Dropdown (Figma 496:26454) */}
       {open && (
