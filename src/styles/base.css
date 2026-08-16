@@ -5,6 +5,16 @@
   --ds-transition-duration: 0.2s;
   --ds-transition-duration-fast: 0.1s;
   --ds-transition-duration-slow: 0.3s;
+
+  /* Global Border Radius Tokens - 24px là chuẩn bo góc chính cho Card & Modal */
+  --dsw-radius-card: 24px;
+  --dsw-radius-modal: 24px;
+  --dsw-radius-panel: 24px;
+  --dsw-radius-lg: 16px;
+  --dsw-radius-md: 12px;
+  --dsw-radius-sm: 8px;
+  --dsw-radius-xs: 6px;
+  --dsw-radius-pill: 9999px;
 }
 
 *, *::before, *::after {

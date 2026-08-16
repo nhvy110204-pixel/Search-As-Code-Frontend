@@ -56,7 +56,7 @@ export function Modal({
     <div className={css.root} role="presentation">
       <div className={css.mask} aria-hidden="true" onClick={onClose} />
       <div
-        className={clsx(css.dialog, className)}
+        className={clsx(css.dialog, headless && css.headlessDialog, className)}
         role="dialog"
         aria-modal="true"
         aria-label={title}

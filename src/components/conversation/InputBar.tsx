@@ -8,6 +8,7 @@ import { ContextMeter } from './ContextMeter'
 import { PopupSelectView, type CommandItem } from '@/components/commands/PopupSelectView'
 import { Tooltip, SelectDropdown } from '@/components/ui'
 import { useChatStore } from '@/store/useChatStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import css from './InputBar.module.css'
 
 const SLASH_COMMANDS: CommandItem[] = [
@@ -33,6 +34,8 @@ export function InputBar({
   onStopStreaming,
 }: InputBarProps) {
   const { availableModels, selectedModelId, selectedEffort, setSelectedModel, isPlanMode, togglePlanMode } = useChatStore()
+  const { isAuthenticated, openLoginModal } = useAuthStore()
+
   const [text, setText] = useState('')
   const [attachments, setAttachments] = useState<AttachmentFile[]>([])
   const [isDragging, setIsDragging] = useState(false)
@@ -51,8 +54,17 @@ export function InputBar({
     el.style.height = `${targetHeight}px`
   }, [text, hero])
 
+  const requireAuth = (): boolean => {
+    if (!isAuthenticated) {
+      openLoginModal('login')
+      return false
+    }
+    return true
+  }
+
   // Handle slash commands detection
   const handleTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    if (!requireAuth()) return
     const val = e.target.value
     setText(val)
 
@@ -65,12 +77,14 @@ export function InputBar({
   }
 
   const handleSelectCommand = (cmd: CommandItem) => {
+    if (!requireAuth()) return
     setText(`${cmd.label} `)
     setShowCommands(false)
     textareaRef.current?.focus()
   }
 
   const handleSend = () => {
+    if (!requireAuth()) return
     if ((!text.trim() && attachments.length === 0) || isStreaming) return
     onSendMessage(text, attachments.length > 0 ? attachments : undefined)
     setText('')
@@ -149,8 +163,26 @@ export function InputBar({
               ref={textareaRef}
               className={css.input}
               rows={hero ? 2 : 1}
-              placeholder={isPlanMode ? 'Nhập mục tiêu để lập kế hoạch hoặc gõ / để mở lệnh...' : 'Gửi tin nhắn hoặc gõ / để xem lệnh nhanh...'}
+              placeholder={
+                !isAuthenticated
+                  ? 'Nhấp vào đây hoặc đăng nhập để bắt đầu trò chuyện...'
+                  : isPlanMode
+                  ? 'Nhập mục tiêu để lập kế hoạch hoặc gõ / để mở lệnh...'
+                  : 'Gửi tin nhắn hoặc gõ / để xem lệnh nhanh...'
+              }
               value={text}
+              onFocus={() => {
+                if (!isAuthenticated) {
+                  openLoginModal('login')
+                  textareaRef.current?.blur()
+                }
+              }}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  openLoginModal('login')
+                  textareaRef.current?.blur()
+                }
+              }}
               onChange={handleTextChange}
               onKeyDown={handleKeyDown}
             />
@@ -171,7 +203,10 @@ export function InputBar({
               <button
                 type="button"
                 className={css.add}
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  if (!requireAuth()) return
+                  fileInputRef.current?.click()
+                }}
                 aria-label="Đính kèm"
               >
                 <Plus size={16} />

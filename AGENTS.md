@@ -62,4 +62,10 @@ chatbot-web-fe/
    - `useChatStore`: Quản lý các phiên chat, streaming, tin nhắn, danh sách workspace, phản hồi like/dislike.
    - `useSettingsStore`: Quản lý API Key, Base URL, Temperature, Max Tokens, Tab cài đặt.
    - `useThemeStore`: Quản lý chế độ theme (Light / Dark / System).
-4. **Tích Hợp Backend Dễ Dàng**: Khi kết nối với backend thực tế, chỉ cần gọi `sendMessage` từ `useChatStore` và cập nhật luồng `fetch` SSE trong hàm `sendMessage`.
+   - `useAuthStore`: Quản lý Access/Refresh JWT Token, trạng thái xác thực, Profile người dùng.
+4. **Quy Chuẩn Bo Góc Hệ Thống (Border Radius Standards)**:
+   - **Main Card & Modal (24px)**: Mọi Modal, Popup, Dialog và Card khung lớn bắt buộc dùng `border-radius: var(--dsw-radius-modal, 24px);` hoặc `var(--dsw-radius-card, 24px);`.
+   - **Vùng chứa lồng bên trong (16px)**: `border-radius: var(--dsw-radius-lg, 16px);`.
+   - **Control / Button / Input (12px / 8px)**: `border-radius: var(--dsw-radius-md, 12px);` hoặc `var(--dsw-radius-sm, 8px);`.
+   - **Row item / Chip / Tag (8px)**: `border-radius: var(--dsw-radius-sm, 8px);`.
+5. **Tích Hợp Backend Chuẩn Production**: Mọi request yêu cầu xác thực sử dụng `fetchWithAuth` từ `src/services/api.ts` để tự động đính kèm Bearer token và xử lý refresh token 401 tự động.

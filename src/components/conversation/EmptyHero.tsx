@@ -4,6 +4,7 @@ import { IconChevronDownOutline14, FishLogo, Menu } from '@/components/ui'
 import type { MenuEntry } from '@/components/ui/Menu'
 import { useChatStore } from '@/store/useChatStore'
 import { useSettingsStore } from '@/store/useSettingsStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import css from './HeroShell.module.css'
 
 export interface EmptyHeroProps {
@@ -35,8 +36,18 @@ export function EmptyHero({ onOpenWorkspacePicker }: EmptyHeroProps) {
   const [presetMenuOpen, setPresetMenuOpen] = useState(false)
   const presetAnchorRef = useRef<HTMLButtonElement>(null)
 
+  const { isAuthenticated, openLoginModal } = useAuthStore()
+
   const activeWs = workspaces.find((w) => w.id === activeWorkspaceId)
   const activePreset = presets.find((p) => p.id === selectedPresetId) || presets[0]
+
+  const handleWorkspaceClick = () => {
+    if (!isAuthenticated) {
+      openLoginModal('login')
+      return
+    }
+    onOpenWorkspacePicker?.()
+  }
 
   const menuItems: MenuEntry[] = [
     {
@@ -104,7 +115,7 @@ export function EmptyHero({ onOpenWorkspacePicker }: EmptyHeroProps) {
             <button
               type="button"
               className={css.workspace}
-              onClick={onOpenWorkspacePicker}
+              onClick={handleWorkspaceClick}
               aria-label="Chọn thư mục làm việc"
             >
               <Folder size={14} className={css.folder} />

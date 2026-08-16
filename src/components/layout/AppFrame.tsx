@@ -3,6 +3,9 @@ import clsx from 'clsx'
 import { SidebarRoot } from '@/components/sidebar/SidebarRoot'
 import { ConversationRoot } from '@/components/conversation/ConversationRoot'
 import { SettingsRoot } from '@/components/settings/SettingsRoot'
+import { LoginModal } from '@/components/auth/LoginModal'
+import { UserProfileModal } from '@/components/auth/UserProfileModal'
+import { useAuthStore } from '@/store/useAuthStore'
 import css from './AppFrame.module.css'
 
 const SIDEBAR_AUTO_COLLAPSE = 1024
@@ -21,6 +24,11 @@ export function AppFrame() {
   const originX = useRef(0)
   const startWidth = useRef(260)
   const frameRef = useRef<HTMLDivElement>(null)
+
+  // Initialize auth session on mount
+  useEffect(() => {
+    useAuthStore.getState().initAuth()
+  }, [])
 
   // Track viewport width changes
   useEffect(() => {
@@ -66,10 +74,16 @@ export function AppFrame() {
     }
   }
 
+  const { isAuthenticated } = useAuthStore()
+
   // Grid columns definition:
-  // Desktop: 56px (rail) or sidebarWidth (expanded) + 1fr (chat)
-  // Mobile: 1fr (chat full width, sidebar is fixed overlay)
-  const gridColumns = isMobile
+  // Unauthenticated: 1fr (no sidebar)
+  // Authenticated:
+  //   Desktop: 56px (rail) or sidebarWidth (expanded) + 1fr (chat)
+  //   Mobile: 1fr (chat full width, sidebar is fixed overlay)
+  const gridColumns = !isAuthenticated
+    ? '1fr'
+    : isMobile
     ? '1fr'
     : sidebarCollapsed
     ? '56px 1fr'
@@ -83,7 +97,7 @@ export function AppFrame() {
       data-dragging={dragging || undefined}
     >
       {/* Mobile Drawer Mask */}
-      {isMobile && (
+      {isMobile && isAuthenticated && (
         <div
           className={clsx(css.mobileBackdrop, mobileDrawerOpen && css.mobileBackdropActive)}
           onClick={() => setMobileDrawerOpen(false)}
@@ -91,23 +105,25 @@ export function AppFrame() {
         />
       )}
 
-      {/* Sidebar Column */}
-      <div
-        className={clsx(
-          css.sidebarCol,
-          isMobile && css.sidebarDrawer,
-          isMobile && mobileDrawerOpen && css.sidebarDrawerOpen
-        )}
-      >
-        <SidebarRoot
-          collapsed={!isMobile && sidebarCollapsed}
-          width={sidebarWidth}
-          onToggleCollapse={handleToggleSidebar}
-        />
-      </div>
+      {/* Sidebar Column (Only rendered when user is authenticated) */}
+      {isAuthenticated && (
+        <div
+          className={clsx(
+            css.sidebarCol,
+            isMobile && css.sidebarDrawer,
+            isMobile && mobileDrawerOpen && css.sidebarDrawerOpen
+          )}
+        >
+          <SidebarRoot
+            collapsed={!isMobile && sidebarCollapsed}
+            width={sidebarWidth}
+            onToggleCollapse={handleToggleSidebar}
+          />
+        </div>
+      )}
 
-      {/* Resize Drag Handle (Desktop only) */}
-      {!sidebarCollapsed && !isMobile && (
+      {/* Resize Drag Handle (Desktop only when authenticated) */}
+      {isAuthenticated && !sidebarCollapsed && !isMobile && (
         <div
           className={css.handle}
           style={{ left: sidebarWidth }}
@@ -125,6 +141,10 @@ export function AppFrame() {
 
       {/* Settings Modal Layer */}
       <SettingsRoot />
+
+      {/* Auth Modals Layer */}
+      <LoginModal />
+      <UserProfileModal />
     </div>
   )
 }

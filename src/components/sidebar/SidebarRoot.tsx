@@ -2,12 +2,12 @@ import { useState, useRef, useEffect } from 'react'
 import clsx from 'clsx'
 import {
   BrandWordmark, FishLogo, IconNewChatOutline16, IconPanelLeftOutline16,
-  IconSettingsOutline16, Tooltip
+  Tooltip
 } from '@/components/ui'
 import { WorkspaceBrowser } from '@/components/workspace/WorkspaceBrowser'
 import { AddWorkspaceModal } from '@/components/layout/AddWorkspaceModal'
+import { SidebarUserControl } from './SidebarUserControl'
 import { useChatStore } from '@/store/useChatStore'
-import { useSettingsStore } from '@/store/useSettingsStore'
 import css from './SidebarRoot.module.css'
 
 export interface SidebarRootProps {
@@ -22,7 +22,6 @@ export function SidebarRoot({
   onToggleCollapse,
 }: SidebarRootProps) {
   const { newSession, activeWorkspaceId } = useChatStore()
-  const { openSettings } = useSettingsStore()
 
   const [settled, setSettled] = useState(collapsed)
   const [isAddWsOpen, setIsAddWsOpen] = useState(false)
@@ -97,22 +96,9 @@ export function SidebarRoot({
         />
       </div>
 
-      {/* 4. Foot Area (Settings Trigger) */}
+      {/* 4. Foot Area (User Profile & Context Menu) */}
       <div className={css.footArea}>
-        <div className={css.settingsArea}>
-          <Tooltip label="Cài đặt hệ thống" delayMs={500} disabled={wide}>
-            <button
-              type="button"
-              className={clsx(css.iconButton, !wide && css.rail)}
-              style={wide ? { width: '100%', height: 34, borderRadius: 12, display: 'flex', alignItems: 'center', gap: 8, padding: '0 8px', justifyContent: 'flex-start' } : undefined}
-              onClick={() => openSettings('general')}
-              aria-label="Cài đặt"
-            >
-              <IconSettingsOutline16 size={wide ? 16 : 18} />
-              {wide && <span style={{ fontSize: 14, color: 'var(--dsw-alias-label-primary)' }}>Cài đặt</span>}
-            </button>
-          </Tooltip>
-        </div>
+        <SidebarUserControl wide={wide} />
       </div>
 
       <AddWorkspaceModal open={isAddWsOpen} onClose={() => setIsAddWsOpen(false)} />

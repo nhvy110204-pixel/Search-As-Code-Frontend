@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import clsx from 'clsx'
 import { Download } from 'lucide-react'
-import { Tooltip } from '@/components/ui'
+import { Tooltip, BrandWordmark, FishLogo } from '@/components/ui'
 import { useChatStore } from '@/store/useChatStore'
 import { useSettingsStore } from '@/store/useSettingsStore'
+import { useAuthStore } from '@/store/useAuthStore'
 import { EmptyHero } from './EmptyHero'
 import { ChatView } from './ChatView'
 import { InputBar } from './InputBar'
@@ -14,6 +15,7 @@ import { PlanReviewPanel } from '@/components/questions/PlanReviewPanel'
 import { ApprovalPanel } from './ApprovalPanel'
 import { ImageLightbox } from '@/components/attachment/ImageLightbox'
 import { AddWorkspaceModal } from '@/components/layout/AddWorkspaceModal'
+import { HeaderSettingsPopover } from '@/components/layout/HeaderSettingsPopover'
 import css from './ConversationRoot.module.css'
 
 export interface ConversationRootProps {
@@ -65,56 +67,86 @@ export function ConversationRoot({ onOpenMobileSidebar, isMobile = false }: Conv
     setPendingQuestions(null)
   }
 
+  const { isAuthenticated, openLoginModal } = useAuthStore()
+
   return (
     <div className={css.root} data-phase={isHero ? 'hero' : 'active'}>
-      {/* 1. Official Header */}
-      <header className={clsx(css.header, isHero && !isMobile && css.headerHidden)}>
-        {(!isHero || isMobile) && (
+      {/* 1. Top Header */}
+      <header className={clsx(css.header, !isAuthenticated ? undefined : (isHero && !isMobile && css.headerHidden))}>
+        {!isAuthenticated ? (
+          /* Guest Top Header */
           <div className={css.titleRow}>
-            <div className={css.titleCluster}>
-              {isMobile && onOpenMobileSidebar && (
-                <button
-                  type="button"
-                  className={css.mobileMenuButton}
-                  onClick={onOpenMobileSidebar}
-                  aria-label="Mở danh sách phiên"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="3" y1="12" x2="21" y2="12" />
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <line x1="3" y1="18" x2="21" y2="18" />
-                  </svg>
-                </button>
-              )}
-              <nav className={css.crumbs} aria-label="Session title">
-                <span className={css.crumbCurrent}>
-                  {activeSession && !isHero ? activeSession.title : 'Cuộc trò chuyện mới'}
-                </span>
-              </nav>
+            <div className={css.guestBrand}>
+              <BrandWordmark />
+            </div>
+            <div className={css.guestAuthCluster}>
+              <HeaderSettingsPopover />
+              <button
+                type="button"
+                className={css.guestLoginButton}
+                onClick={() => openLoginModal('login')}
+              >
+                Đăng nhập
+              </button>
+              <button
+                type="button"
+                className={css.guestRegisterButton}
+                onClick={() => openLoginModal('register')}
+              >
+                Đăng ký
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Authenticated Header */
+          (!isHero || isMobile) && (
+            <div className={css.titleRow}>
+              <div className={css.titleCluster}>
+                {isMobile && onOpenMobileSidebar && (
+                  <button
+                    type="button"
+                    className={css.mobileMenuButton}
+                    onClick={onOpenMobileSidebar}
+                    aria-label="Mở danh sách phiên"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="3" y1="12" x2="21" y2="12" />
+                      <line x1="3" y1="6" x2="21" y2="6" />
+                      <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                  </button>
+                )}
+                <nav className={css.crumbs} aria-label="Session title">
+                  <span className={css.crumbCurrent}>
+                    {activeSession && !isHero ? activeSession.title : 'Cuộc trò chuyện mới'}
+                  </span>
+                </nav>
+
+                {!isHero && (
+                  <div className={css.headerActions}>
+                    <AgentPresetLabel presetName={activePreset?.name || 'Standard mode'} />
+                  </div>
+                )}
+              </div>
 
               {!isHero && (
-                <div className={css.headerActions}>
-                  <AgentPresetLabel presetName={activePreset?.name || 'Standard mode'} />
+                <div className={css.headerUtilities}>
+                  <HeaderSettingsPopover />
+                  <Tooltip label="Tải xuống toàn bộ nhật ký phiên (Session log)" delayMs={300}>
+                    <button
+                      type="button"
+                      className={css.sessionLogButton}
+                      onClick={handleDownloadSessionLog}
+                      aria-label="Tải xuống nhật ký phiên"
+                    >
+                      <span>Session log</span>
+                      <Download size={13} />
+                    </button>
+                  </Tooltip>
                 </div>
               )}
             </div>
-
-            {!isHero && (
-              <div className={css.headerUtilities}>
-                <Tooltip label="Tải xuống toàn bộ nhật ký phiên (Session log)" delayMs={300}>
-                  <button
-                    type="button"
-                    className={css.sessionLogButton}
-                    onClick={handleDownloadSessionLog}
-                    aria-label="Tải xuống nhật ký phiên"
-                  >
-                    <span>Session log</span>
-                    <Download size={13} />
-                  </button>
-                </Tooltip>
-              </div>
-            )}
-          </div>
+          )
         )}
       </header>
 

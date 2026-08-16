@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { ChatMessage, ChatSession, ModelOption, AttachmentFile, WorkspaceFolder } from '@/types/chat'
 import { streamChatMessage } from '@/services/api'
+import { useAuthStore } from './useAuthStore'
 
 const DEFAULT_MODELS: ModelOption[] = [
   { id: 'deepseek-reasoner', name: 'DeepSeek-R1 (Reasoner)', provider: 'DeepSeek', description: 'Tư duy suy nghĩ từng bước chuyên sâu (CoT Reasoning)', reasoningEnabled: true },
@@ -57,7 +58,7 @@ function loadSavedWorkspaces(): WorkspaceFolder[] {
       const parsed = JSON.parse(raw)
       if (Array.isArray(parsed) && parsed.length > 0) return parsed
     }
-  } catch {}
+  } catch { }
   return DEFAULT_WORKSPACES
 }
 
@@ -68,7 +69,7 @@ function loadSavedSessions(): ChatSession[] {
       const parsed = JSON.parse(raw)
       if (Array.isArray(parsed) && parsed.length > 0) return parsed
     }
-  } catch {}
+  } catch { }
 
   const initialId = 'session-default'
   return [
@@ -97,13 +98,13 @@ function loadSavedSessions(): ChatSession[] {
 function saveSessions(sessions: ChatSession[]) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions))
-  } catch {}
+  } catch { }
 }
 
 function saveWorkspaces(workspaces: WorkspaceFolder[]) {
   try {
     localStorage.setItem(WS_STORAGE_KEY, JSON.stringify(workspaces))
-  } catch {}
+  } catch { }
 }
 
 export const useChatStore = create<ChatStore>((set, get) => {
@@ -297,6 +298,13 @@ export const useChatStore = create<ChatStore>((set, get) => {
       if (!content.trim() && (!attachments || attachments.length === 0)) return
       if (get().isStreaming) return
 
+      // Auth Guard Check: require authentication before sending message
+      const authState = useAuthStore.getState()
+      if (!authState.isAuthenticated) {
+        authState.openLoginModal('login')
+        return
+      }
+
       const activeSession = get().getActiveSession()
       if (!activeSession) return
 
@@ -439,14 +447,14 @@ export const useChatStore = create<ChatStore>((set, get) => {
                   messages: s.messages.map((m) =>
                     m.id === assistantMsgId
                       ? {
-                          ...m,
-                          isThinking: false,
-                          stats: {
-                            durationMs: Math.round(elapsedSec * 1000),
-                            tokens: approxTokens,
-                            tps: Math.round(approxTokens / (elapsedSec || 1)),
-                          },
-                        }
+                        ...m,
+                        isThinking: false,
+                        stats: {
+                          durationMs: Math.round(elapsedSec * 1000),
+                          tokens: approxTokens,
+                          tps: Math.round(approxTokens / (elapsedSec || 1)),
+                        },
+                      }
                       : m
                   ),
                 }
@@ -464,10 +472,10 @@ export const useChatStore = create<ChatStore>((set, get) => {
                   messages: s.messages.map((m) =>
                     m.id === assistantMsgId
                       ? {
-                          ...m,
-                          isThinking: false,
-                          content: (m.content || '') + `\n\n> ⚠️ Lỗi kết nối: ${err.message}`,
-                        }
+                        ...m,
+                        isThinking: false,
+                        content: (m.content || '') + `\n\n> Lỗi kết nối: ${err.message}`,
+                      }
                       : m
                   ),
                 }
