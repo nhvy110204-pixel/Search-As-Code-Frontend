@@ -110,7 +110,7 @@ export function MessageItem({
           )}
 
           {message.content && (
-            <div className={css.bubble}>
+            <div className={css.bubble} data-role="user-bubble">
               {message.content}
             </div>
           )}

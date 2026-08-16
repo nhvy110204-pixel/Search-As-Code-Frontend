@@ -38,7 +38,9 @@ export function ChatView({
     setShowToBottom(false)
   }, [])
 
-  // Smooth scroll to position the latest user message right against the top edge of the chat viewport
+  // Smooth scroll to position the latest user message:
+  // - If <= 20 lines: positions top of user bubble at top of chat view
+  // - If > 20 lines: pushes up so the last few lines (~3-4 lines) of the user bubble remain visible at the top
   const scrollToUserMessage = useCallback(() => {
     userScrolledUpRef.current = false
     setShowToBottom(false)
@@ -53,14 +55,34 @@ export function ChatView({
       if (lastUserEl) {
         const scrollerRect = scroller.getBoundingClientRect()
         const userRect = lastUserEl.getBoundingClientRect()
-        // Position user message right against the top edge of the chat view
-        const targetTop = scroller.scrollTop + (userRect.top - scrollerRect.top) - 12
+
+        const bubbleEl = (lastUserEl.querySelector(`[data-role="user-bubble"]`) ||
+          lastUserEl.querySelector(`.${css.bubble}`) ||
+          lastUserEl) as HTMLElement
+        const bubbleRect = bubbleEl.getBoundingClientRect()
+
+        // Estimate number of lines from text newlines and computed height (line-height is ~24px, padding ~20px)
+        const textContent = bubbleEl.textContent || ''
+        const newlineCount = textContent.split('\n').length
+        const estimatedDomLines = Math.round((bubbleRect.height - 20) / 24)
+        const isOver20Lines = newlineCount > 20 || estimatedDomLines > 20 || bubbleRect.height > 20 * 24
+
+        let targetTop: number
+        if (isOver20Lines) {
+          // Push up so the last 3-4 lines (~86px) of the chat bubble stay visible at the top of the viewport
+          const visibleTailHeight = Math.min(bubbleRect.height, 3 * 24 + 14)
+          targetTop = scroller.scrollTop + (bubbleRect.bottom - scrollerRect.top) - visibleTailHeight - 12
+        } else {
+          // Normal: align top of user message to top of viewport
+          targetTop = scroller.scrollTop + (userRect.top - scrollerRect.top) - 12
+        }
+
         scroller.scrollTo({
           top: Math.max(0, targetTop),
           behavior: 'smooth',
         })
       }
-    }, 30)
+    }, 40)
   }, [])
 
   // Handle user manual mouse wheel interaction
@@ -161,11 +183,35 @@ export function ChatView({
     }
   }, [lastMsg?.content, lastMsg?.reasoning, lastMsg?.steps, isStreaming, autoScrollFollow])
 
-  // When streaming completes, smoothly seat the output at the natural bottom
+  // When streaming completes, smoothly seat the output at the natural bottom if needed
   const prevStreamingRef = useRef(isStreaming)
   useEffect(() => {
     if (prevStreamingRef.current && !isStreaming) {
       if (!userScrolledUpRef.current) {
+        const scroller = scrollRef.current
+        const column = columnRef.current
+        if (scroller && column) {
+          const userElements = column.querySelectorAll(`[data-role="user"]`)
+          const lastUserEl = userElements[userElements.length - 1] as HTMLElement | undefined
+          const bubbleEl = (lastUserEl?.querySelector(`[data-role="user-bubble"]`) ||
+            lastUserEl?.querySelector(`.${css.bubble}`) ||
+            lastUserEl) as HTMLElement | undefined
+
+          if (bubbleEl) {
+            const bubbleRect = bubbleEl.getBoundingClientRect()
+            const textContent = bubbleEl.textContent || ''
+            const isOver20Lines = textContent.split('\n').length > 20 || bubbleRect.height > 20 * 24
+
+            const scrollerRect = scroller.getBoundingClientRect()
+            const lastChild = column.lastElementChild as HTMLElement | null
+            const lastChildRect = lastChild ? lastChild.getBoundingClientRect() : null
+
+            // If it's over 20 lines and the response is already fully visible in viewport, avoid pushing the user bubble off-screen
+            if (isOver20Lines && lastChildRect && lastChildRect.bottom <= scrollerRect.bottom + 24) {
+              return
+            }
+          }
+        }
         toBottom('smooth')
       }
     }
