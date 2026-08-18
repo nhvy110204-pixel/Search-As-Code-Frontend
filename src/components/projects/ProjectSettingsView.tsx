@@ -374,7 +374,7 @@ export function ProjectSettingsView({ project, onUpdate, onDelete }: ProjectSett
                     className={isSyncing ? 'spin' : undefined}
                     style={{ marginRight: 6 }}
                   />
-                  {isSyncing ? 'Đang đồng bộ...' : syncSuccess ? '✓ Đã đồng bộ' : 'Đồng bộ lại'}
+                  {isSyncing ? 'Đang đồng bộ...' : syncSuccess ? '✓ Đã đồng bộ' : ''}
                 </Button>
               </Tooltip>
             </div>
@@ -395,8 +395,7 @@ export function ProjectSettingsView({ project, onUpdate, onDelete }: ProjectSett
                   size="sm"
                   onClick={() => setDeleteModalOpen(true)}
                 >
-                  <IconTrashOutline16 size={16} style={{ marginRight: 6 }} />
-                  Xóa Dự án
+                  <IconTrashOutline16 size={16} />
                 </Button>
               </Tooltip>
             </div>

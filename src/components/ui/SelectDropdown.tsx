@@ -123,12 +123,16 @@ export function SelectDropdown({
                 onClick={() => handleSelect(opt.value)}
               >
                 <span className={css.optionCopy}>
-                  <span className={css.optionLabel}>{opt.label}</span>
+                  <span className={css.optionLabel} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    {opt.icon}
+                    <span>{opt.label}</span>
+                  </span>
                   {opt.description && <span className={css.optionDesc}>{opt.description}</span>}
                 </span>
                 <span className={css.check}>
                   {isSelected && <IconCheckOutline16 />}
                 </span>
+
               </button>
             )
           })}

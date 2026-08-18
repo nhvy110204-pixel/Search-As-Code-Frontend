@@ -6,7 +6,7 @@ import {
   IconRefreshOutline16, IconLoadingOutline16, IconDownloadOutline16
 } from '@/components/ui'
 import { documentApi } from '@/services/api'
-import type { DocumentPreviewResponse, DocumentResponse } from '@/types/project'
+import type { DocumentPreviewResponse, DocumentResponse, DocumentChunkResponse } from '@/types/project'
 import css from './DocumentDetailModal.module.css'
 
 export interface DocumentDetailModalProps {
@@ -42,6 +42,7 @@ export function DocumentDetailModal({
 }: DocumentDetailModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('overview')
   const [previewData, setPreviewData] = useState<DocumentPreviewResponse | null>(null)
+  const [realChunks, setRealChunks] = useState<DocumentChunkResponse[]>([])
   const [loading, setLoading] = useState(false)
   const [chunkQuery, setChunkQuery] = useState('')
   const [copiedChunkIdx, setCopiedChunkIdx] = useState<number | null>(null)
@@ -53,6 +54,7 @@ export function DocumentDetailModal({
   useEffect(() => {
     if (!open || !document) {
       setPreviewData(null)
+      setRealChunks([])
       return
     }
 
@@ -62,28 +64,46 @@ export function DocumentDetailModal({
     window.addEventListener('keydown', onKey)
 
     setLoading(true)
-    documentApi
-      .getPreview(document.id)
-      .then((res) => setPreviewData(res))
-      .catch(() => { })
+    Promise.allSettled([
+      documentApi.getPreview(document.id),
+      documentApi.listChunks(document.id, 1, 100),
+    ])
+      .then(([previewRes, chunksRes]) => {
+        if (previewRes.status === 'fulfilled') {
+          setPreviewData(previewRes.value)
+        }
+        if (chunksRes.status === 'fulfilled' && chunksRes.value?.items?.length > 0) {
+          setRealChunks(chunksRes.value.items)
+        }
+      })
       .finally(() => setLoading(false))
 
     return () => window.removeEventListener('keydown', onKey)
   }, [open, document, onClose])
 
-  // Derive chunks from content (or sample chunks)
+  // Derive chunks from real API chunks or fallback to content parsing
   const chunks = useMemo(() => {
+    if (realChunks.length > 0) {
+      return realChunks.map((c, i) => ({
+        index: c.chunk_index ?? i + 1,
+        tokens: c.token_count || Math.round(c.content.length / 4),
+        text: c.content,
+        hash: c.chunk_hash,
+        embed_status: c.embed_status,
+      }))
+    }
+
     if (!previewData?.content) {
-      // Generate placeholder chunks based on document chunk_count
       const count = document?.chunk_count || 3
       return Array.from({ length: count }, (_, i) => ({
         index: i + 1,
         tokens: Math.floor(250 + Math.random() * 150),
         text: `Đoạn trích (Chunk #${i + 1}) thuộc tài liệu "${document?.file_name || 'Tài liệu'}". Dữ liệu này được Docling bóc tách theo ngữ nghĩa và đánh chỉ mục vector tương ứng trong cơ sở dữ liệu Qdrant.`,
+        hash: undefined,
+        embed_status: 'done',
       }))
     }
 
-    // Split markdown content into logical chunks (by double line break or headers)
     const rawSections = previewData.content
       .split(/\n\s*\n/)
       .map((s) => s.trim())
@@ -95,6 +115,8 @@ export function DocumentDetailModal({
           index: 1,
           tokens: Math.round(previewData.content.length / 4),
           text: previewData.content,
+          hash: undefined,
+          embed_status: 'done',
         },
       ]
     }
@@ -103,8 +125,11 @@ export function DocumentDetailModal({
       index: i + 1,
       tokens: Math.round(text.length / 4),
       text,
+      hash: undefined,
+      embed_status: 'done',
     }))
-  }, [previewData, document])
+  }, [realChunks, previewData, document])
+
 
   const filteredChunks = useMemo(() => {
     if (!chunkQuery.trim()) return chunks.map((c) => ({ ...c, score: null }))
@@ -214,7 +239,7 @@ export function DocumentDetailModal({
                 </Pill>
               ) : (
                 <Pill style={{ color: 'var(--dsw-static-amber-500)', fontSize: 11.5 }}>
-                  ⏳ {document.status}
+                  {document.status}
                 </Pill>
               )}
             </div>
@@ -259,6 +284,66 @@ export function DocumentDetailModal({
                     </div>
                   </div>
                 </div>
+
+                {/* Quality Gate Assessment */}
+                {document.processing_metadata?.quality_score !== undefined && (
+                  <div className={css.sectionBox}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div className={css.sectionBoxTitle}>Kiểm định Chất lượng Bóc tách (Quality Gate)</div>
+                      <Pill
+                        style={{
+                          color:
+                            document.processing_metadata.quality_score >= 0.75
+                              ? 'var(--dsw-static-green-500)'
+                              : document.processing_metadata.quality_score >= 0.5
+                              ? 'var(--dsw-static-amber-500)'
+                              : 'var(--dsw-static-red-500)',
+                        }}
+                      >
+                        Điểm chất lượng: {Math.round(document.processing_metadata.quality_score * 100)}%
+                      </Pill>
+                    </div>
+
+                    <div className={css.metaRow}>
+                      <span className={css.metaKey}>Profile bóc tách tối ưu</span>
+                      <span className={css.metaVal} style={{ fontWeight: 600, color: 'var(--dsw-alias-brand-primary)' }}>
+                        {document.processing_metadata.final_parse_profile || 'DIGITAL_BOOK'}
+                      </span>
+                    </div>
+
+                    {document.processing_metadata.text_density !== undefined && (
+                      <div className={css.metaRow}>
+                        <span className={css.metaKey}>Mật độ văn bản</span>
+                        <span className={css.metaVal}>
+                          {Math.round(document.processing_metadata.text_density)} ký tự / trang
+                        </span>
+                      </div>
+                    )}
+
+                    {document.processing_metadata.valid_char_ratio !== undefined && (
+                      <div className={css.metaRow}>
+                        <span className={css.metaKey}>Tỷ lệ ký tự hợp lệ</span>
+                        <span className={css.metaVal}>
+                          {(document.processing_metadata.valid_char_ratio * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                    )}
+
+                    {Array.isArray(document.processing_metadata.quality_warnings) &&
+                      document.processing_metadata.quality_warnings.length > 0 && (
+                        <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--dsw-static-amber-500)' }}>
+                            Cảnh báo kiểm định:
+                          </span>
+                          {document.processing_metadata.quality_warnings.map((w: string, idx: number) => (
+                            <div key={idx} style={{ fontSize: 12.5, color: 'var(--dsw-alias-label-secondary)', paddingLeft: 8, borderLeft: '2px solid var(--dsw-static-amber-500)' }}>
+                              • {w}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                )}
 
                 {previewData?.summary && (
                   <div className={css.sectionBox}>

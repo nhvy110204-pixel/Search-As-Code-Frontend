@@ -10,7 +10,9 @@
   line-height: 18px;
   color: var(--dsw-alias-label-secondary);
   background: var(--dsw-alias-bg-layer-2);
+  white-space: nowrap;
 }
+
 
 .interactive {
   cursor: pointer;

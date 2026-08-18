@@ -12,7 +12,11 @@ import type {
   DocumentUploadResponse,
   BatchUploadResponse,
   IngestionTaskStatus,
+  BatchDeleteResponse,
+  ReindexResponse,
+  ProjectIngestionStats,
 } from '@/types/project'
+
 import { useAuthStore } from '@/store/useAuthStore'
 
 export interface StreamCallbacks {
@@ -380,10 +384,24 @@ export const documentApi = {
     const response = await fetchWithAuth(`/documents/${id}`, {
       method: 'DELETE',
     })
-    if (!response.ok && response.status !== 204) {
+    // 204 No Content or 404 (already deleted from DB) is considered successfully deleted
+    if (!response.ok && response.status !== 204 && response.status !== 404) {
       const err = await response.json().catch(() => ({}))
       throw new Error(extractApiErrorMessage(err, 'Xóa tài liệu thất bại'))
     }
+  },
+
+
+  async batchDelete(documentIds: string[], hard = false): Promise<BatchDeleteResponse> {
+    const response = await fetchWithAuth('/documents/batch-delete', {
+      method: 'POST',
+      body: JSON.stringify({ document_ids: documentIds, hard }),
+    })
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Xóa hàng loạt thất bại'))
+    }
+    return response.json()
   },
 }
 
@@ -443,7 +461,42 @@ export const ingestionApi = {
       method: 'POST',
     })
   },
+
+  async reindexDocument(documentId: string): Promise<ReindexResponse> {
+    const response = await fetchWithAuth(`/ingestion/reindex/${documentId}`, {
+      method: 'POST',
+    })
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Đồng bộ lại tài liệu thất bại'))
+    }
+    const json = await response.json()
+    return json.data
+  },
+
+  async reindexProject(projectId: string): Promise<ReindexResponse> {
+    const response = await fetchWithAuth(`/ingestion/reindex-project/${projectId}`, {
+      method: 'POST',
+    })
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Đồng bộ lại toàn bộ dự án thất bại'))
+    }
+    const json = await response.json()
+    return json.data
+  },
+
+  async getStats(projectId: string): Promise<ProjectIngestionStats> {
+    const response = await fetchWithAuth(`/ingestion/stats/${projectId}`)
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(extractApiErrorMessage(err, 'Không thể lấy thống kê tri thức dự án'))
+    }
+    const json = await response.json()
+    return json.data
+  },
 }
+
 
 // -------------------------------------------------------------
 // Chat Sessions & Messages API

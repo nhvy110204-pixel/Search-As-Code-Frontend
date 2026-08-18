@@ -136,3 +136,23 @@ input[type='range']::-moz-range-thumb {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
   cursor: grab;
 }
+
+/* Global Loading Spinner Keyframe Animation & Utility Classes */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin,
+.iconSpin,
+.animate-spin {
+  display: inline-block;
+  transform-origin: 50% 50%;
+  animation: spin 0.85s linear infinite;
+  will-change: transform;
+}
+

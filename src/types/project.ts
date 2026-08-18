@@ -1,5 +1,5 @@
 export type ProjectStatus = 'active' | 'archived' | 'deleted'
-export type DocumentStatus = 'uploaded' | 'pending' | 'processing' | 'completed' | 'failed' | 'quarantined'
+export type DocumentStatus = 'uploaded' | 'pending' | 'processing' | 'completed' | 'completed_with_warnings' | 'failed' | 'quarantined'
 
 export interface ProjectResponse {
   id: string
@@ -47,6 +47,7 @@ export interface DocumentResponse {
   file_size_bytes: number
   status: DocumentStatus
   chunk_count: number
+  has_partial_failures?: boolean
   processing_metadata: Record<string, any>
   created_at: string
   updated_at: string
@@ -98,9 +99,26 @@ export interface DocumentUploadResponse {
   status: string
 }
 
+export type IngestionTaskState =
+  | 'pending'
+  | 'checking_cache'
+  | 'parsing'
+  | 'summarizing'
+  | 'chunking'
+  | 'deduping'
+  | 'enriching'
+  | 'embedding'
+  | 'saving'
+  | 'processing'
+  | 'completed'
+  | 'completed_with_warnings'
+  | 'failed'
+  | 'cancelled'
+  | (string & {})
+
 export interface IngestionTaskStatus {
   task_id: string
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+  status: IngestionTaskState
   progress: number
   error_message?: string | null
   started_at?: string | null
@@ -108,6 +126,7 @@ export interface IngestionTaskStatus {
   attempts?: number
   last_error_step?: string | null
 }
+
 
 export interface BatchUploadResultItem {
   file_name: string
@@ -132,4 +151,37 @@ export interface UploadQueueItem {
   taskId?: string
   documentId?: string
   error?: string
+  stage?: string
 }
+
+export interface ProjectIngestionStats {
+  total_documents: number
+  total_chunks: number
+  total_size_bytes: number
+  dedup_ratio: number
+  saved_chunks: number
+  status_breakdown: {
+    completed: number
+    processing: number
+    failed: number
+    pending: number
+  }
+  last_synced_at?: string | null
+}
+
+export interface BatchDeleteResponse {
+  success: boolean
+  deleted_count: number
+  deleted_document_ids: string[]
+  message: string
+}
+
+export interface ReindexResponse {
+  task_id?: string
+  document_id?: string
+  project_id?: string
+  task_ids?: string[]
+  total_queued?: number
+  status?: string
+}
+

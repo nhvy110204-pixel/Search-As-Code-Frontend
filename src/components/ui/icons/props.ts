@@ -4,4 +4,5 @@ export interface IconProps {
   size?: number | undefined
   className?: string | undefined
   style?: CSSProperties | undefined
+  spin?: boolean | undefined
 }
