@@ -372,7 +372,6 @@ export function ProjectSettingsView({ project, onUpdate, onDelete }: ProjectSett
                   <IconRefreshOutline16
                     size={16}
                     className={isSyncing ? 'spin' : undefined}
-                    style={{ marginRight: 6 }}
                   />
                   {isSyncing ? 'Đang đồng bộ...' : syncSuccess ? '✓ Đã đồng bộ' : ''}
                 </Button>

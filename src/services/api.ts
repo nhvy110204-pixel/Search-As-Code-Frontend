@@ -12,6 +12,7 @@ import type {
   DocumentUploadResponse,
   BatchUploadResponse,
   IngestionTaskStatus,
+  IngestionProgressEvent,
   BatchDeleteResponse,
   ReindexResponse,
   ProjectIngestionStats,
@@ -494,6 +495,75 @@ export const ingestionApi = {
     }
     const json = await response.json()
     return json.data
+  },
+
+  subscribeToEvents(
+    projectId: string,
+    onEvent: (event: IngestionProgressEvent) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const abortController = new AbortController()
+
+    const connect = async () => {
+      const token = useAuthStore.getState().accessToken
+      if (!token) return
+
+      try {
+        const url = `${API_V1_URL}/ingestion/events?project_id=${projectId}`
+        const headers: Record<string, string> = {
+          'Accept': 'text/event-stream',
+          'Authorization': `Bearer ${token}`,
+        }
+
+        const response = await fetch(url, {
+          headers,
+          signal: abortController.signal,
+        })
+
+        if (!response.ok) {
+          throw new Error(`SSE connection failed (${response.status})`)
+        }
+
+        const reader = response.body?.getReader()
+        if (!reader) return
+
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (!abortController.signal.aborted) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed || trimmed.startsWith(':')) continue
+
+            if (trimmed.startsWith('data: ')) {
+              const dataStr = trimmed.slice(6)
+              try {
+                const event: IngestionProgressEvent = JSON.parse(dataStr)
+                onEvent(event)
+              } catch {
+                // Ignore parsing errors on non-json frames
+              }
+            }
+          }
+        }
+      } catch (err: any) {
+        if (abortController.signal.aborted) return
+        onError?.(err instanceof Error ? err : new Error(String(err)))
+      }
+    }
+
+    connect()
+
+    return () => {
+      abortController.abort()
+    }
   },
 }
 

@@ -28,7 +28,19 @@ function UploadQueueItemRow({ item }: { item: UploadQueueItem }) {
   const isDone = item.status === 'completed'
   const isFailed = item.status === 'failed'
   const isProcessing = !isDone && !isFailed
-  const smoothProgress = useSmoothProgress(item.progress, isProcessing, isDone, item.id)
+
+  const smoothProgress = useSmoothProgress({
+    actualProgress: item.actualProgress ?? item.progress,
+    isProcessing,
+    isCompleted: isDone,
+    isFailed,
+    cacheKey: item.id,
+    stepUpperBound: item.stepUpperBound,
+  })
+
+  const unitsLabel = item.processedUnits !== undefined && item.totalUnits !== undefined && item.totalUnits > 0
+    ? ` • ${item.processedUnits}/${item.totalUnits} ${item.unitName || ''}`
+    : ''
 
   return (
     <div className={css.queueItem}>
@@ -43,17 +55,17 @@ function UploadQueueItemRow({ item }: { item: UploadQueueItem }) {
           {isDone ? (
             <Pill style={{ color: 'var(--dsw-static-green-500)' }}>
               <IconCheckOutline16 size={11} style={{ marginRight: 4 }} />
-              <span>Hoàn thành</span>
+              <span>Hoàn thành 100%</span>
             </Pill>
           ) : isFailed ? (
             <Pill style={{ color: 'var(--dsw-static-red-500)' }}>
               <IconWarningOutline16 size={11} style={{ marginRight: 4 }} />
-              <span>Lỗi nạp</span>
+              <span title={item.error || 'Lỗi nạp'}>{item.error || 'Lỗi nạp'}</span>
             </Pill>
           ) : (
             <Pill style={{ color: 'var(--dsw-alias-brand-primary)' }}>
               <IconLoadingOutline16 size={11} className="spin" style={{ marginRight: 4 }} />
-              <span>Đang nạp {smoothProgress}%</span>
+              <span>{item.stage || 'Đang nạp'} ({smoothProgress}%{unitsLabel})</span>
             </Pill>
           )}
         </div>

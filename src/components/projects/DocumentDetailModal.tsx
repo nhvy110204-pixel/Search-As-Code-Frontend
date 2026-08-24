@@ -285,6 +285,59 @@ export function DocumentDetailModal({
                   </div>
                 </div>
 
+                {/* Hard Reconciliation Gate Report */}
+                {document.processing_metadata?.reconciliation_report && (
+                  <div className={css.sectionBox}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div className={css.sectionBoxTitle}>Đối Soát Tính Toàn Vẹn (Reconciliation Gate)</div>
+                      <Pill
+                        style={{
+                          color:
+                            document.processing_metadata.reconciliation_report.is_invariant_matched
+                              ? 'var(--dsw-static-green-500)'
+                              : document.processing_metadata.reconciliation_report.failed_ratio < 0.05
+                              ? 'var(--dsw-static-amber-500)'
+                              : 'var(--dsw-static-red-500)',
+                        }}
+                      >
+                        {document.processing_metadata.reconciliation_report.is_invariant_matched
+                          ? '100% Khớp đối soát'
+                          : `Tỷ lệ lỗi: ${(document.processing_metadata.reconciliation_report.failed_ratio * 100).toFixed(1)}%`}
+                      </Pill>
+                    </div>
+
+                    <div className={css.metaRow}>
+                      <span className={css.metaKey}>Số đoạn văn bản kỳ vọng</span>
+                      <span className={css.metaVal}>
+                        {document.processing_metadata.reconciliation_report.expected_chunk_count ?? document.chunk_count} chunks
+                      </span>
+                    </div>
+
+                    <div className={css.metaRow}>
+                      <span className={css.metaKey}>Số liên kết tài liệu (Links)</span>
+                      <span className={css.metaVal}>
+                        {document.processing_metadata.reconciliation_report.actual_link_count ?? document.chunk_count} links
+                      </span>
+                    </div>
+
+                    <div className={css.metaRow}>
+                      <span className={css.metaKey}>Số Vector Qdrant đồng bộ</span>
+                      <span className={css.metaVal}>
+                        {document.processing_metadata.reconciliation_report.actual_embedded_count ?? document.chunk_count} vectors
+                      </span>
+                    </div>
+
+                    {document.processing_metadata.reconciliation_report.failed_chunk_count > 0 && (
+                      <div className={css.metaRow}>
+                        <span className={css.metaKey} style={{ color: 'var(--dsw-static-amber-500)' }}>Số chunk lỗi</span>
+                        <span className={css.metaVal} style={{ color: 'var(--dsw-static-amber-500)' }}>
+                          {document.processing_metadata.reconciliation_report.failed_chunk_count} chunks
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Quality Gate Assessment */}
                 {document.processing_metadata?.quality_score !== undefined && (
                   <div className={css.sectionBox}>

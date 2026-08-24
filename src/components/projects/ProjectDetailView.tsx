@@ -69,12 +69,20 @@ function DocumentProcessingPill({
   docId,
   progress,
   stageText,
+  stepUpperBound,
 }: {
   docId: string
   progress: number
   stageText: string
+  stepUpperBound?: number
 }) {
-  const smoothProgress = useSmoothProgress(progress, true, false, docId)
+  const smoothProgress = useSmoothProgress({
+    actualProgress: progress,
+    isProcessing: true,
+    isCompleted: false,
+    cacheKey: docId,
+    stepUpperBound,
+  })
 
   return (
     <Tooltip label={`Tiến trình nạp: ${stageText} (${smoothProgress}%)`} delayMs={200}>
@@ -483,8 +491,10 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
               ) : (
                 filteredDocuments.map((doc) => {
                   const isSelected = selectedIds.has(doc.id)
-                  const isProcessing = doc.status === 'processing' || doc.status === 'pending'
-                  const isCompleted = doc.status === 'completed'
+                  const isProcessing = doc.status === 'processing' || doc.status === 'pending' || doc.status === 'uploaded'
+                  const isCompleted = doc.status === 'completed' || doc.status === 'ready'
+                  const isPartial = doc.status === 'partially_available' || doc.status === 'completed_with_warnings'
+                  const isQuarantined = doc.status === 'quarantined'
                   const isFailed = doc.status === 'failed'
 
                   return (
@@ -535,29 +545,43 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
                         {isCompleted && (
                           <Tooltip
                             label={
-                              doc.processing_metadata?.quality_score !== undefined
-                                ? `Chất lượng bóc tách: ${Math.round(doc.processing_metadata.quality_score * 100)}% (${doc.processing_metadata.final_parse_profile || 'DIGITAL_BOOK'})`
-                                : 'Đã lập chỉ mục và đồng bộ Vector Qdrant'
+                              doc.processing_metadata?.reconciliation_report?.is_invariant_matched
+                                ? `100% Khớp đối soát (${doc.chunk_count} chunks, ${doc.processing_metadata?.final_parse_profile || 'DIGITAL_BOOK'})`
+                                : doc.processing_metadata?.quality_score !== undefined
+                                ? `Chất lượng: ${Math.round(doc.processing_metadata.quality_score * 100)}% (${doc.processing_metadata.final_parse_profile || 'DIGITAL_BOOK'})`
+                                : 'Đã lập chỉ mục và sẵn sàng tra cứu RAG'
                             }
                             delayMs={200}
                           >
                             <Pill style={{ color: 'var(--dsw-static-green-500)', gap: 6 }}>
                               <StateDot state="done" size={8} />
-                              <span>Đã lập chỉ mục</span>
+                              <span>Sẵn sàng tra cứu</span>
                             </Pill>
                           </Tooltip>
                         )}
-                        {doc.status === 'completed_with_warnings' && (
+                        {isPartial && (
                           <Tooltip
                             label={
-                              doc.processing_metadata?.quality_warnings?.[0] ||
-                              `Độ nhận diện văn bản thấp (${Math.round((doc.processing_metadata?.quality_score || 0.4) * 100)}%)`
+                              doc.processing_metadata?.reconciliation_report?.failed_chunk_count !== undefined
+                                ? `Khả dụng một phần: thiếu ${doc.processing_metadata.reconciliation_report.failed_chunk_count} chunks`
+                                : doc.processing_metadata?.quality_warnings?.[0] || 'Khả dụng một phần với cảnh báo'
                             }
                             delayMs={200}
                           >
                             <Pill style={{ color: 'var(--dsw-static-amber-500)', gap: 6 }}>
                               <StateDot state="warning" size={8} />
-                              <span>Cảnh báo chất lượng</span>
+                              <span>Khả dụng một phần</span>
+                            </Pill>
+                          </Tooltip>
+                        )}
+                        {isQuarantined && (
+                          <Tooltip
+                            label={doc.processing_metadata?.quarantine_reason || 'Tệp bị cách ly do nghi vấn độc hại hoặc chất lượng không đạt'}
+                            delayMs={200}
+                          >
+                            <Pill style={{ color: 'var(--dsw-static-red-500)', gap: 6 }}>
+                              <StateDot state="error" size={8} />
+                              <span>Đã cách ly</span>
                             </Pill>
                           </Tooltip>
                         )}
@@ -566,7 +590,7 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
                           const prog = queueItem?.progress ?? (doc.processing_metadata?.progress as number) ?? 0
                           const stageText = queueItem?.stage ?? (doc.processing_metadata?.stage as string) ?? 'Đang nạp dữ liệu'
 
-                          return <DocumentProcessingPill docId={doc.id} progress={prog} stageText={stageText} />
+                          return <DocumentProcessingPill docId={doc.id} progress={prog} stageText={stageText} stepUpperBound={queueItem?.stepUpperBound} />
                         })()}
 
                         {isFailed && (

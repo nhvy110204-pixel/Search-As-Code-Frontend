@@ -1,5 +1,14 @@
 export type ProjectStatus = 'active' | 'archived' | 'deleted'
-export type DocumentStatus = 'uploaded' | 'pending' | 'processing' | 'completed' | 'completed_with_warnings' | 'failed' | 'quarantined'
+export type DocumentStatus =
+  | 'uploaded'
+  | 'pending'
+  | 'processing'
+  | 'ready'
+  | 'completed'
+  | 'partially_available'
+  | 'completed_with_warnings'
+  | 'failed'
+  | 'quarantined'
 
 export interface ProjectResponse {
   id: string
@@ -101,6 +110,7 @@ export interface DocumentUploadResponse {
 
 export type IngestionTaskState =
   | 'pending'
+  | 'running'
   | 'checking_cache'
   | 'parsing'
   | 'summarizing'
@@ -108,23 +118,56 @@ export type IngestionTaskState =
   | 'deduping'
   | 'enriching'
   | 'embedding'
+  | 'linking'
   | 'saving'
   | 'processing'
   | 'completed'
+  | 'partial_success'
   | 'completed_with_warnings'
   | 'failed'
+  | 'failed_retryable'
+  | 'failed_permanent'
   | 'cancelled'
+  | 'quarantined'
   | (string & {})
 
 export interface IngestionTaskStatus {
   task_id: string
+  document_id?: string | null
+  project_id?: string | null
   status: IngestionTaskState
   progress: number
+  current_step?: string | null
+  stage_label?: string | null
+  processed_units?: number | null
+  total_units?: number | null
+  unit_name?: string | null
+  step_upper_bound?: number | null
+  estimated_duration_ms?: number | null
   error_message?: string | null
   started_at?: string | null
   completed_at?: string | null
   attempts?: number
   last_error_step?: string | null
+}
+
+export interface IngestionProgressEvent {
+  event_id: string
+  seq_num: number
+  task_id: string
+  document_id: string
+  project_id: string
+  status: IngestionTaskState
+  actual_progress: number
+  current_step?: string | null
+  stage_label?: string | null
+  processed_units?: number | null
+  total_units?: number | null
+  unit_name?: string | null
+  step_upper_bound?: number | null
+  estimated_duration_ms?: number | null
+  error_message?: string | null
+  timestamp: string
 }
 
 
@@ -148,10 +191,17 @@ export interface UploadQueueItem {
   size: number
   status: 'queued' | 'uploading' | 'parsing' | 'indexing' | 'completed' | 'failed'
   progress: number
+  actualProgress?: number
   taskId?: string
   documentId?: string
   error?: string
   stage?: string
+  processedUnits?: number
+  totalUnits?: number
+  unitName?: string
+  stepUpperBound?: number
+  lastSeqNum?: number
+  lastUpdatedAt?: number
 }
 
 export interface ProjectIngestionStats {

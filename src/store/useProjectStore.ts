@@ -1,5 +1,11 @@
 import { create } from 'zustand'
-import type { ProjectResponse, DocumentResponse, UploadQueueItem, ProjectIngestionStats } from '@/types/project'
+import type {
+  ProjectResponse,
+  DocumentResponse,
+  UploadQueueItem,
+  ProjectIngestionStats,
+  IngestionProgressEvent,
+} from '@/types/project'
 import { projectApi, documentApi, ingestionApi } from '@/services/api'
 import { useAuthStore } from './useAuthStore'
 
@@ -22,6 +28,9 @@ interface ProjectStore {
   // Upload progress tracking
   uploadQueue: Record<string, UploadQueueItem[]>
 
+  // SSE subscription cleanup handlers
+  activeSseCleanup: Record<string, (() => void) | null>
+
   // Actions
   fetchProjects: () => Promise<void>
   createProject: (name: string, description?: string) => Promise<ProjectResponse>
@@ -39,6 +48,8 @@ interface ProjectStore {
   reindexDocument: (documentId: string, projectId: string) => Promise<void>
   reindexProject: (projectId: string) => Promise<void>
   clearCompletedUploads: (projectId: string) => void
+  subscribeToProjectEvents: (projectId: string) => void
+  handleIngestionEvent: (event: IngestionProgressEvent) => void
 }
 
 
@@ -77,36 +88,63 @@ function normalizeProgress(progressValue: number | undefined | null): number {
   return Math.min(100, Math.max(0, Math.round(progressValue * 100)))
 }
 
+export function isTerminalSuccess(status: string): boolean {
+  return (
+    status === 'completed' ||
+    status === 'completed_with_warnings' ||
+    status === 'partial_success' ||
+    status === 'ready'
+  )
+}
 
-function getStageLabelFromStatus(status: string, lastStep?: string | null): string {
+export function isTerminalFailure(status: string): boolean {
+  return (
+    status === 'failed' ||
+    status === 'failed_permanent' ||
+    status === 'failed_retryable' ||
+    status === 'quarantined' ||
+    status === 'cancelled'
+  )
+}
+
+function getStageLabelFromStatus(status: string, lastStep?: string | null, customLabel?: string | null): string {
+  if (customLabel) return customLabel
   switch (status) {
     case 'pending':
       return 'Chờ khởi tạo...'
     case 'checking_cache':
-      return 'Kiểm tra hash Blake3...'
+      return 'Kiểm tra bảo mật & MIME...'
     case 'parsing':
-      return 'Docling OCR & bóc tách...'
+      return 'Docling OCR & bóc tách văn bản...'
     case 'summarizing':
       return 'Tóm tắt ngữ nghĩa tài liệu...'
     case 'chunking':
-      return 'Cắt đoạn Chunks & Khử trùng...'
+      return 'Phân tích cấu trúc & chia đoạn...'
     case 'deduping':
     case 'dedup':
-      return 'Khử trùng lặp Chunks...'
+      return 'Khử trùng lặp Chunks Blake3...'
     case 'enriching':
     case 'enrich':
-      return 'Bổ sung ngữ cảnh Chunks...'
+      return 'Bổ sung ngữ cảnh tài liệu...'
     case 'embedding':
     case 'embed':
-      return 'Sinh Vector Embeddings...'
-    case 'saving':
+      return 'Sinh Vector Embeddings & Qdrant...'
+    case 'linking':
     case 'link':
-      return 'Lưu vào Qdrant & Database...'
+      return 'Liên kết cây tri thức...'
+    case 'saving':
+      return 'Lưu vào Database & Qdrant...'
     case 'completed':
     case 'completed_with_warnings':
+    case 'partial_success':
       return 'Hoàn tất 100%'
     case 'failed':
+    case 'failed_permanent':
+    case 'failed_retryable':
+    case 'quarantined':
       return `Lỗi tại bước: ${lastStep || 'Không xác định'}`
+    case 'cancelled':
+      return 'Đã hủy tác vụ'
     default:
       return status || 'Đang xử lý...'
   }
@@ -123,7 +161,110 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   projectStats: {},
   isLoadingStats: {},
   uploadQueue: {},
+  activeSseCleanup: {},
 
+  subscribeToProjectEvents: (projectId: string) => {
+    if (!projectId) return
+    const { activeSseCleanup } = get()
+    if (activeSseCleanup[projectId]) return
+
+    const cleanup = ingestionApi.subscribeToEvents(
+      projectId,
+      (event) => {
+        get().handleIngestionEvent(event)
+      },
+      (error) => {
+        console.warn(`SSE stream for project ${projectId} fallback to adaptive polling:`, error)
+      }
+    )
+
+    set((state) => ({
+      activeSseCleanup: {
+        ...state.activeSseCleanup,
+        [projectId]: cleanup,
+      },
+    }))
+  },
+
+  handleIngestionEvent: (event: IngestionProgressEvent) => {
+    const {
+      project_id,
+      task_id,
+      document_id,
+      status,
+      actual_progress,
+      stage_label,
+      processed_units,
+      total_units,
+      unit_name,
+      step_upper_bound,
+      error_message,
+      seq_num,
+    } = event
+
+    const isDone = isTerminalSuccess(status)
+    const isFail = isTerminalFailure(status)
+
+    let queueStatus: 'queued' | 'uploading' | 'parsing' | 'indexing' | 'completed' | 'failed' = 'parsing'
+    if (isDone) queueStatus = 'completed'
+    else if (isFail) queueStatus = 'failed'
+    else if (status === 'embedding' || status === 'saving' || status === 'linking') queueStatus = 'indexing'
+    else queueStatus = 'parsing'
+
+    const progPercent = isDone ? 100 : normalizeProgress(actual_progress)
+    const stage = stage_label || getStageLabelFromStatus(status, null, stage_label)
+
+    set((state) => ({
+      uploadQueue: {
+        ...state.uploadQueue,
+        [project_id]: (state.uploadQueue[project_id] || []).map((q) => {
+          const isMatch = (q.taskId && q.taskId === task_id) || (q.documentId && q.documentId === document_id)
+          if (!isMatch) return q
+
+          if (q.lastSeqNum && seq_num && seq_num < q.lastSeqNum) return q
+
+          return {
+            ...q,
+            taskId: task_id,
+            documentId: document_id,
+            status: queueStatus,
+            progress: progPercent,
+            actualProgress: progPercent,
+            stage,
+            processedUnits: processed_units ?? q.processedUnits,
+            totalUnits: total_units ?? q.totalUnits,
+            unitName: unit_name ?? q.unitName,
+            stepUpperBound: step_upper_bound ?? q.stepUpperBound,
+            error: isFail ? (error_message || q.error || 'Xử lý thất bại') : undefined,
+            lastSeqNum: seq_num,
+            lastUpdatedAt: Date.now(),
+          }
+        }),
+      },
+      documents: {
+        ...state.documents,
+        [project_id]: (state.documents[project_id] || []).map((d) => {
+          if (d.id !== document_id) return d
+          return {
+            ...d,
+            status: isDone ? 'ready' : isFail ? 'failed' : 'processing',
+            processing_metadata: {
+              ...d.processing_metadata,
+              progress: progPercent,
+              stage,
+              processed_units,
+              total_units,
+            },
+          }
+        }),
+      },
+    }))
+
+    if (isDone || isFail) {
+      get().fetchDocuments(project_id)
+      get().fetchProjectStats(project_id)
+    }
+  },
 
   getActiveProject: () => {
     const { projects, activeProjectId } = get()
@@ -133,6 +274,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   setActiveProject: (id: string | null) => {
     if (id) {
       localStorage.setItem(ACTIVE_PROJECT_KEY, id)
+      get().subscribeToProjectEvents(id)
     } else {
       localStorage.removeItem(ACTIVE_PROJECT_KEY)
     }
@@ -161,6 +303,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         if (list.length > 0) {
           get().setActiveProject(list[0].id)
         }
+      } else {
+        get().subscribeToProjectEvents(currentActive)
       }
     } catch (err: any) {
       set({
@@ -203,26 +347,28 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       let updated: ProjectResponse | undefined
       set((state) => {
         const next = state.projects.map((p) => {
-          if (p.id !== id) return p
-          updated = {
-            ...p,
-            name: name !== undefined ? name : p.name,
-            description: description !== undefined ? description : p.description,
-            settings: settings !== undefined ? settings : p.settings,
-            updated_at: new Date().toISOString(),
+          if (p.id === id) {
+            updated = {
+              ...p,
+              name: name ?? p.name,
+              description: description !== undefined ? description : p.description,
+              settings: settings ? { ...p.settings, ...settings } : p.settings,
+              updated_at: new Date().toISOString(),
+            }
+            return updated
           }
-          return updated
+          return p
         })
         return { projects: next }
       })
       return updated!
     }
 
-    const updated = await projectApi.update(id, { name, description, settings })
+    const res = await projectApi.update(id, { name, description, settings })
     set((state) => ({
-      projects: state.projects.map((p) => (p.id === id ? { ...p, ...updated } : p)),
+      projects: state.projects.map((p) => (p.id === id ? res : p)),
     }))
-    return updated
+    return res
   },
 
   deleteProject: async (id: string) => {
@@ -270,6 +416,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   uploadFiles: async (projectId: string, files: File[]) => {
     if (!files || files.length === 0 || !projectId) return
 
+    // Ensure SSE subscription is active
+    get().subscribeToProjectEvents(projectId)
+
     // 1. Enqueue files in local tracking state
     const newItems: UploadQueueItem[] = files.map((f) => ({
       id: `upload-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -277,7 +426,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       name: f.name,
       size: f.size,
       status: 'queued',
-      progress: 10,
+      progress: 5,
+      actualProgress: 5,
+      lastUpdatedAt: Date.now(),
     }))
 
     set((state) => ({
@@ -287,86 +438,111 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       },
     }))
 
-    // 2. Process each file in parallel
+    // 2. Process each file
     for (const item of newItems) {
       try {
-        // Update status: Uploading
         set((state) => ({
           uploadQueue: {
             ...state.uploadQueue,
             [projectId]: state.uploadQueue[projectId]?.map((q) =>
-              q.id === item.id ? { ...q, status: 'uploading', progress: 30 } : q
+              q.id === item.id ? { ...q, status: 'uploading', progress: 15, actualProgress: 15, stage: 'Đang tải lên...' } : q
             ) || [],
           },
         }))
 
         const res = await ingestionApi.upload(projectId, item.file)
 
-        // If newly uploaded with background Celery task
         if (res.task_id) {
           set((state) => ({
             uploadQueue: {
               ...state.uploadQueue,
               [projectId]: state.uploadQueue[projectId]?.map((q) =>
                 q.id === item.id
-                  ? { ...q, status: 'parsing', progress: 10, taskId: res.task_id!, documentId: res.document_id, stage: 'Khởi tạo bóc tách...' }
+                  ? {
+                      ...q,
+                      status: 'parsing',
+                      progress: 10,
+                      actualProgress: 10,
+                      taskId: res.task_id!,
+                      documentId: res.document_id,
+                      stage: 'Khởi tạo bóc tách...',
+                      lastUpdatedAt: Date.now(),
+                    }
                   : q
               ) || [],
             },
           }))
 
-          // Start polling task
+          // Adaptive Polling & Watchdog (checks every 2.5s for stall or completion fallback)
           const pollTaskId = res.task_id
           const pollInterval = setInterval(async () => {
             try {
-              const statusRes = await ingestionApi.getStatus(pollTaskId)
-              const progPercent = normalizeProgress(statusRes.progress)
-              const stage = getStageLabelFromStatus(statusRes.status, statusRes.last_error_step)
-
-              let queueStatus: 'parsing' | 'indexing' | 'uploading' | 'completed' | 'failed' = 'parsing'
-              if (statusRes.status === 'completed' || statusRes.status === 'completed_with_warnings') {
-                queueStatus = 'completed'
-              } else if (statusRes.status === 'failed') {
-                queueStatus = 'failed'
-              } else if (statusRes.status === 'embedding' || statusRes.status === 'saving') {
-                queueStatus = 'indexing'
-              } else {
-                queueStatus = 'parsing'
+              const currentQueueItem = get().uploadQueue[projectId]?.find((q) => q.taskId === pollTaskId)
+              if (!currentQueueItem || currentQueueItem.status === 'completed' || currentQueueItem.status === 'failed') {
+                clearInterval(pollInterval)
+                return
               }
 
-              if (queueStatus === 'completed') {
+              const statusRes = await ingestionApi.getStatus(pollTaskId)
+              const isDone = isTerminalSuccess(statusRes.status)
+              const isFail = isTerminalFailure(statusRes.status)
+              const progPercent = isDone ? 100 : normalizeProgress(statusRes.progress)
+              const stage = statusRes.stage_label || getStageLabelFromStatus(statusRes.status, statusRes.last_error_step, statusRes.stage_label)
+
+              let queueStatus: 'parsing' | 'indexing' | 'uploading' | 'completed' | 'failed' = 'parsing'
+              if (isDone) queueStatus = 'completed'
+              else if (isFail) queueStatus = 'failed'
+              else if (statusRes.status === 'embedding' || statusRes.status === 'saving' || statusRes.status === 'linking') queueStatus = 'indexing'
+              else queueStatus = 'parsing'
+
+              if (isDone) {
                 clearInterval(pollInterval)
                 set((state) => ({
                   uploadQueue: {
                     ...state.uploadQueue,
                     [projectId]: state.uploadQueue[projectId]?.map((q) =>
-                      q.id === item.id ? { ...q, status: 'completed', progress: 100, stage: 'Hoàn tất 100%' } : q
-                    ) || [],
-                  },
-                }))
-                // Refresh documents list and projects stats
-                get().fetchDocuments(projectId)
-                get().fetchProjects()
-                get().fetchProjectStats(projectId)
-              } else if (queueStatus === 'failed') {
-                clearInterval(pollInterval)
-                set((state) => ({
-                  uploadQueue: {
-                    ...state.uploadQueue,
-                    [projectId]: state.uploadQueue[projectId]?.map((q) =>
-                      q.id === item.id
-                        ? { ...q, status: 'failed', progress: 100, error: statusRes.error_message || 'Xử lý thất bại', stage: 'Lỗi nạp' }
+                      q.taskId === pollTaskId
+                        ? { ...q, status: 'completed', progress: 100, actualProgress: 100, stage: 'Hoàn tất 100%' }
                         : q
                     ) || [],
                   },
                 }))
+                get().fetchDocuments(projectId)
+                get().fetchProjects()
+                get().fetchProjectStats(projectId)
+              } else if (isFail) {
+                clearInterval(pollInterval)
+                set((state) => ({
+                  uploadQueue: {
+                    ...state.uploadQueue,
+                    [projectId]: state.uploadQueue[projectId]?.map((q) =>
+                      q.taskId === pollTaskId
+                        ? { ...q, status: 'failed', progress: 100, actualProgress: 100, error: statusRes.error_message || 'Xử lý thất bại', stage: stage || 'Lỗi nạp' }
+                        : q
+                    ) || [],
+                  },
+                }))
+                get().fetchDocuments(projectId)
                 get().fetchProjectStats(projectId)
               } else {
                 set((state) => ({
                   uploadQueue: {
                     ...state.uploadQueue,
                     [projectId]: state.uploadQueue[projectId]?.map((q) =>
-                      q.id === item.id ? { ...q, status: queueStatus, progress: progPercent, stage } : q
+                      q.taskId === pollTaskId
+                        ? {
+                            ...q,
+                            status: queueStatus,
+                            progress: progPercent,
+                            actualProgress: progPercent,
+                            stage,
+                            processedUnits: statusRes.processed_units ?? q.processedUnits,
+                            totalUnits: statusRes.total_units ?? q.totalUnits,
+                            unitName: statusRes.unit_name ?? q.unitName,
+                            stepUpperBound: statusRes.step_upper_bound ?? q.stepUpperBound,
+                            lastUpdatedAt: Date.now(),
+                          }
+                        : q
                     ) || [],
                   },
                 }))
@@ -374,18 +550,17 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             } catch {
               // Ignore temporary poll network failure
             }
-          }, 1200)
+          }, 2500)
 
-
-          // Fallback timeout to clear interval after 30 minutes for large multi-thousand page documents
+          // Clear fallback poll after 30 minutes
           setTimeout(() => clearInterval(pollInterval), 1800000)
         } else {
-          // Cached or instant complete
+          // Instant cache complete
           set((state) => ({
             uploadQueue: {
               ...state.uploadQueue,
               [projectId]: state.uploadQueue[projectId]?.map((q) =>
-                q.id === item.id ? { ...q, status: 'completed', progress: 100, stage: 'Hoàn tất 100%', documentId: res.document_id } : q
+                q.id === item.id ? { ...q, status: 'completed', progress: 100, actualProgress: 100, stage: 'Hoàn tất 100%', documentId: res.document_id } : q
               ) || [],
             },
           }))
@@ -393,14 +568,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           get().fetchProjects()
           get().fetchProjectStats(projectId)
         }
-
-
       } catch (err: any) {
         set((state) => ({
           uploadQueue: {
             ...state.uploadQueue,
             [projectId]: state.uploadQueue[projectId]?.map((q) =>
-              q.id === item.id ? { ...q, status: 'failed', progress: 100, error: err.message || 'Upload lỗi' } : q
+              q.id === item.id ? { ...q, status: 'failed', progress: 100, actualProgress: 100, error: err.message || 'Upload lỗi' } : q
             ) || [],
           },
         }))
@@ -483,12 +656,13 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   reindexDocument: async (documentId: string, projectId: string) => {
+    get().subscribeToProjectEvents(projectId)
     set((state) => ({
       documents: {
         ...state.documents,
         [projectId]: (state.documents[projectId] || []).map((d) =>
           d.id === documentId
-            ? { ...d, status: 'processing', processing_metadata: { ...d.processing_metadata, progress: 15, stage: 'Khởi tạo Re-indexing...' } }
+            ? { ...d, status: 'processing', processing_metadata: { ...d.processing_metadata, progress: 10, stage: 'Khởi tạo Re-indexing...' } }
             : d
         ),
       },
@@ -501,10 +675,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         const poll = setInterval(async () => {
           try {
             const st = await ingestionApi.getStatus(taskId)
-            const progPercent = normalizeProgress(st.progress)
-            const stageText = getStageLabelFromStatus(st.status, st.last_error_step)
+            const isDone = isTerminalSuccess(st.status)
+            const isFail = isTerminalFailure(st.status)
+            const progPercent = isDone ? 100 : normalizeProgress(st.progress)
+            const stageText = st.stage_label || getStageLabelFromStatus(st.status, st.last_error_step, st.stage_label)
 
-            if (st.status === 'completed' || st.status === 'completed_with_warnings' || st.status === 'failed') {
+            if (isDone || isFail) {
               clearInterval(poll)
               get().fetchDocuments(projectId)
               get().fetchProjectStats(projectId)
@@ -527,8 +703,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           } catch {
             clearInterval(poll)
           }
-        }, 1200)
-        setTimeout(() => clearInterval(poll), 120000)
+        }, 2000)
+        setTimeout(() => clearInterval(poll), 1800000)
       }
 
     } catch (err) {
@@ -539,6 +715,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
 
   reindexProject: async (projectId: string) => {
+    get().subscribeToProjectEvents(projectId)
     set((state) => ({
       documents: {
         ...state.documents,
