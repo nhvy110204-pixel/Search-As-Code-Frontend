@@ -29,9 +29,10 @@ export interface ProjectDetailViewProps {
 
 const STATUS_OPTIONS: SelectOption[] = [
   { value: 'all', label: 'Tất cả trạng thái' },
-  { value: 'completed', label: 'Đã lập chỉ mục', icon: <StateDot state="done" size={9} /> },
+  { value: 'completed', label: 'Sẵn sàng tra cứu', icon: <StateDot state="done" size={9} /> },
+  { value: 'partial', label: 'Khả dụng một phần', icon: <StateDot state="warning" size={9} /> },
   { value: 'processing', label: 'Đang xử lý', icon: <IconLoadingOutline16 size={12} style={{ color: 'var(--dsw-static-amber-500, #f59e0b)' }} /> },
-  { value: 'failed', label: 'Lỗi nạp', icon: <StateDot state="error" size={9} /> },
+  { value: 'failed', label: 'Lỗi nạp / Cách ly', icon: <StateDot state="error" size={9} /> },
 ]
 
 const SORT_OPTIONS: SelectOption[] = [
@@ -146,7 +147,7 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
 
   // Search, Filter & Sort
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'processing' | 'failed'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'partial' | 'processing' | 'failed'>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'name' | 'size' | 'chunks'>('newest')
 
   // Multi-selection
@@ -230,9 +231,25 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
           if (!doc.file_name.toLowerCase().includes(q)) return false
         }
         // 2. Status Filter
-        if (statusFilter === 'completed' && doc.status !== 'completed') return false
-        if (statusFilter === 'processing' && doc.status !== 'processing' && doc.status !== 'pending') return false
-        if (statusFilter === 'failed' && doc.status !== 'failed') return false
+        if (statusFilter === 'completed') {
+          const isDocCompleted = doc.status === 'completed' || doc.status === 'ready'
+          if (!isDocCompleted) return false
+        } else if (statusFilter === 'partial') {
+          const isDocPartial = doc.status === 'partially_available' || doc.status === 'completed_with_warnings'
+          if (!isDocPartial) return false
+        } else if (statusFilter === 'processing') {
+          const isDocProcessing =
+            doc.status === 'processing' ||
+            doc.status === 'pending' ||
+            doc.status === 'uploaded' ||
+            doc.status === 'parsing' ||
+            doc.status === 'chunking' ||
+            doc.status === 'embedding'
+          if (!isDocProcessing) return false
+        } else if (statusFilter === 'failed') {
+          const isDocFailed = doc.status === 'failed' || doc.status === 'quarantined'
+          if (!isDocFailed) return false
+        }
         return true
       })
       .sort((a, b) => {
@@ -504,7 +521,7 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
                     >
                       {/* Checkbox */}
                       <div onClick={(e) => handleRowSelect(doc.id, e)}>
-                        <Checkbox checked={isSelected} onChange={() => {}} />
+                        <Checkbox checked={isSelected} onChange={() => { }} />
                       </div>
 
                       {/* File Name + Type Badge */}
@@ -548,8 +565,8 @@ export function ProjectDetailView({ projectId }: ProjectDetailViewProps) {
                               doc.processing_metadata?.reconciliation_report?.is_invariant_matched
                                 ? `100% Khớp đối soát (${doc.chunk_count} chunks, ${doc.processing_metadata?.final_parse_profile || 'DIGITAL_BOOK'})`
                                 : doc.processing_metadata?.quality_score !== undefined
-                                ? `Chất lượng: ${Math.round(doc.processing_metadata.quality_score * 100)}% (${doc.processing_metadata.final_parse_profile || 'DIGITAL_BOOK'})`
-                                : 'Đã lập chỉ mục và sẵn sàng tra cứu RAG'
+                                  ? `Chất lượng: ${Math.round(doc.processing_metadata.quality_score * 100)}% (${doc.processing_metadata.final_parse_profile || 'DIGITAL_BOOK'})`
+                                  : 'Sẵn sàng tra cứu và sẵn sàng tra cứu RAG'
                             }
                             delayMs={200}
                           >

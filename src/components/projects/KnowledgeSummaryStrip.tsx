@@ -49,8 +49,15 @@ export function KnowledgeSummaryStrip({
   const totalSize = stats?.total_size_bytes ?? documents.reduce((acc, d) => acc + (d.file_size_bytes || 0), 0)
 
   // Status breakdown
-  const processingCount = documents.filter((d) => d.status === 'processing' || d.status === 'pending').length
-  const failedCount = documents.filter((d) => d.status === 'failed').length
+  const processingCount = documents.filter((d) =>
+    d.status === 'processing' ||
+    d.status === 'pending' ||
+    d.status === 'uploaded' ||
+    d.status === 'parsing' ||
+    d.status === 'chunking' ||
+    d.status === 'embedding'
+  ).length
+  const failedCount = documents.filter((d) => d.status === 'failed' || d.status === 'quarantined').length
   const isAllReady = processingCount === 0 && failedCount === 0 && totalDocs > 0
 
   const handleSyncClick = async () => {

@@ -3,12 +3,21 @@ export type DocumentStatus =
   | 'uploaded'
   | 'pending'
   | 'processing'
+  | 'parsing'
+  | 'parsed'
+  | 'summarizing'
+  | 'chunking'
+  | 'deduped'
+  | 'enriched'
+  | 'embedding'
+  | 'linked'
   | 'ready'
   | 'completed'
   | 'partially_available'
   | 'completed_with_warnings'
   | 'failed'
   | 'quarantined'
+  | (string & {})
 
 export interface ProjectResponse {
   id: string

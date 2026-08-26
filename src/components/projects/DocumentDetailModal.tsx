@@ -1,9 +1,10 @@
 import { useState, useEffect, useId, useMemo } from 'react'
+import clsx from 'clsx'
 import {
-  Button, Pill, Tooltip,
+  Tooltip,
   IconCloseOutline16, IconBrowseOutline16, IconSearchOutline16,
   IconDataOutline16, IconCodeOutline16, IconCopyOutline16, IconCheckOutline16,
-  IconRefreshOutline16, IconLoadingOutline16, IconDownloadOutline16
+  IconLoadingOutline16, IconDownloadOutline16
 } from '@/components/ui'
 import { documentApi } from '@/services/api'
 import type { DocumentPreviewResponse, DocumentResponse, DocumentChunkResponse } from '@/types/project'
@@ -18,11 +19,38 @@ export interface DocumentDetailModalProps {
 
 type TabType = 'overview' | 'chunks' | 'vector' | 'markdown'
 
-const NAV_ITEMS: { id: TabType; label: string; icon: any }[] = [
-  { id: 'overview', label: 'Tổng quan & Metadata', icon: IconBrowseOutline16 },
-  { id: 'chunks', label: 'Tra cứu Chunk (Search)', icon: IconSearchOutline16 },
-  { id: 'vector', label: 'Vector & Qdrant', icon: IconDataOutline16 },
-  { id: 'markdown', label: 'Văn bản Markdown', icon: IconCodeOutline16 },
+interface TabItem {
+  id: TabType
+  label: string
+  icon: any
+  desc: string
+}
+
+const TABS: TabItem[] = [
+  {
+    id: 'overview',
+    label: 'Tổng quan & Kiểm định',
+    icon: IconBrowseOutline16,
+    desc: 'Thuộc tính tệp, kiểm định chất lượng Docling & đối soát toàn vẹn',
+  },
+  {
+    id: 'chunks',
+    label: 'Tra cứu Chunks',
+    icon: IconSearchOutline16,
+    desc: 'Kiểm tra nội dung các đoạn cắt nhỏ, số token & tìm kiếm từ khóa',
+  },
+  {
+    id: 'vector',
+    label: 'Vector & Qdrant',
+    icon: IconDataOutline16,
+    desc: 'Không gian biểu diễn vector, độ đo Cosine & chỉ mục HNSW',
+  },
+  {
+    id: 'markdown',
+    label: 'Nội dung Markdown',
+    icon: IconCodeOutline16,
+    desc: 'Văn bản cấu trúc bóc tách tự động bởi Docling Parser',
+  },
 ]
 
 function formatBytes(bytes: number, decimals = 1): string {
@@ -45,6 +73,7 @@ export function DocumentDetailModal({
   const [realChunks, setRealChunks] = useState<DocumentChunkResponse[]>([])
   const [loading, setLoading] = useState(false)
   const [chunkQuery, setChunkQuery] = useState('')
+  const [mdQuery, setMdQuery] = useState('')
   const [copiedChunkIdx, setCopiedChunkIdx] = useState<number | null>(null)
   const [copiedAllMd, setCopiedAllMd] = useState(false)
   const [expandedChunks, setExpandedChunks] = useState<Record<number, boolean>>({})
@@ -130,7 +159,6 @@ export function DocumentDetailModal({
     }))
   }, [realChunks, previewData, document])
 
-
   const filteredChunks = useMemo(() => {
     if (!chunkQuery.trim()) return chunks.map((c) => ({ ...c, score: null }))
     const q = chunkQuery.toLowerCase()
@@ -143,7 +171,6 @@ export function DocumentDetailModal({
         return { ...c, score }
       })
 
-    // Sort by relevance score descending
     return results.sort((a, b) => (b.score || 0) - (a.score || 0))
   }, [chunks, chunkQuery])
 
@@ -192,204 +219,201 @@ export function DocumentDetailModal({
 
   return (
     <div className={css.overlay} role="presentation">
-      <div className={css.mask} onClick={onClose} />
+      <div className={css.mask} onClick={onClose} aria-hidden="true" />
 
       <div className={css.panel} role="dialog" aria-modal="true" aria-labelledby={titleId}>
-        {/* 1. Left Nav Rail */}
+        {/* Top-Right Circular Close Button (matching SettingsRoot) */}
+        <Tooltip label="Đóng (Esc)" delayMs={300}>
+          <button
+            type="button"
+            className={css.close}
+            onClick={onClose}
+            aria-label="Đóng chi tiết tài liệu"
+          >
+            <IconCloseOutline16 size={16} />
+          </button>
+        </Tooltip>
+
+        {/* 1. Left Nav Rail (188px matching SettingsRoot) */}
         <nav className={css.nav}>
-          <div className={css.navHeader}>
-            <div className={css.navTitle} id={titleId}>Chi tiết tài liệu</div>
-            <Tooltip label={document.file_name} delayMs={300}>
-              <div className={css.navDocName}>
-                {document.file_name}
-              </div>
-            </Tooltip>
-          </div>
+          <div className={css.navTitle} id={titleId}>Chi tiết tài liệu</div>
+          <Tooltip label={document.file_name} delayMs={300}>
+            <div className={css.navDocSub}>
+              {document.file_name}
+            </div>
+          </Tooltip>
 
           <div className={css.navList}>
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon
-              const isActive = activeTab === item.id
+            {TABS.map((tab) => {
+              const Icon = tab.icon
+              const isActive = activeTab === tab.id
               return (
                 <button
-                  key={item.id}
+                  key={tab.id}
                   type="button"
-                  className={css.navCell}
-                  data-active={isActive}
-                  onClick={() => setActiveTab(item.id)}
+                  className={clsx(css.navCell, isActive && css.active)}
+                  aria-current={isActive ? 'true' : undefined}
+                  onClick={() => setActiveTab(tab.id)}
                 >
-                  <Icon size={16} />
-                  <span>{item.label}</span>
+                  <Icon size={16} className={css.navIcon} />
+                  <span className={css.navLabel}>{tab.label}</span>
                 </button>
               )
             })}
           </div>
         </nav>
 
-        {/* 2. Main Content Pane */}
-        <main className={css.main}>
-          <div className={css.mainHeader}>
-            <div className={css.headerLeft}>
-              <h2 className={css.sectionTitle}>
-                {NAV_ITEMS.find((n) => n.id === activeTab)?.label}
+        {/* 2. Main Content Column */}
+        <div className={css.content}>
+          <div className={css.options}>
+            {/* Section Header */}
+            <div className={css.sectionHead}>
+              <h2 className={css.title}>
+                {TABS.find((t) => t.id === activeTab)?.label}
               </h2>
-              {document.status === 'completed' ? (
-                <Pill style={{ color: 'var(--dsw-static-green-500)', fontSize: 11.5 }}>
-                  ✓ Đã lập chỉ mục Qdrant
-                </Pill>
-              ) : (
-                <Pill style={{ color: 'var(--dsw-static-amber-500)', fontSize: 11.5 }}>
-                  {document.status}
-                </Pill>
-              )}
+              <p className={css.intro}>
+                {TABS.find((t) => t.id === activeTab)?.desc}
+              </p>
             </div>
 
-            <Tooltip label="Đóng (Esc)" delayMs={300}>
-              <button
-                type="button"
-                className={css.closeButton}
-                onClick={onClose}
-                aria-label="Đóng chi tiết tài liệu"
-              >
-                <IconCloseOutline16 size={18} />
-              </button>
-            </Tooltip>
-          </div>
-
-          <div className={css.content}>
             {/* Tab 1: Overview & Metadata */}
             {activeTab === 'overview' && (
               <>
-                <div className={css.gridStats}>
-                  <div className={css.statCard}>
-                    <div className={css.statLabel}>Dung lượng tệp</div>
-                    <div className={css.statValue}>{formatBytes(document.file_size_bytes)}</div>
+                {/* Quick Stats Grid */}
+                <div className={css.grid4}>
+                  <div className={css.rowCard}>
+                    <span className={css.metaKey}>Dung lượng tệp</span>
+                    <span className={css.metaVal}>{formatBytes(document.file_size_bytes)}</span>
                   </div>
-                  <div className={css.statCard}>
-                    <div className={css.statLabel}>Số lượng Chunks</div>
-                    <div className={css.statValue} style={{ color: 'var(--dsw-alias-brand-primary)' }}>
+                  <div className={css.rowCard}>
+                    <span className={css.metaKey}>Số lượng Chunks</span>
+                    <span className={css.metaVal} style={{ color: 'var(--dsw-alias-brand-primary)' }}>
                       {document.chunk_count || chunks.length} chunks
-                    </div>
+                    </span>
                   </div>
-                  <div className={css.statCard}>
-                    <div className={css.statLabel}>Định dạng MIME</div>
-                    <div className={css.statValue} style={{ fontSize: 13.5, fontFamily: 'var(--ds-font-family-code)' }}>
+                  <div className={css.rowCard}>
+                    <span className={css.metaKey}>Định dạng MIME</span>
+                    <span className={css.metaVal}>
                       {document.mime_type || 'application/octet-stream'}
-                    </div>
+                    </span>
                   </div>
-                  <div className={css.statCard}>
-                    <div className={css.statLabel}>Qdrant Vector State</div>
-                    <div className={css.statValue} style={{ fontSize: 13.5, color: 'var(--dsw-static-green-500)' }}>
-                      Synchronized
+                  <div className={css.rowCard}>
+                    <span className={css.metaKey}>Trạng thái Qdrant</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span className={clsx(css.credentialDot, css.credentialDotSuccess)} />
+                      <span className={css.metaVal} style={{ color: 'var(--dsw-alias-state-success-primary, #22c55e)' }}>
+                        Synced
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Hard Reconciliation Gate Report */}
+                {/* Reconciliation Gate Report */}
                 {document.processing_metadata?.reconciliation_report && (
-                  <div className={css.sectionBox}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div className={css.sectionBoxTitle}>Đối Soát Tính Toàn Vẹn (Reconciliation Gate)</div>
-                      <Pill
-                        style={{
-                          color:
+                  <div className={css.rowCard}>
+                    <div className={css.rowHead}>
+                      <div className={css.rowIdentity}>
+                        <span
+                          className={clsx(
+                            css.credentialDot,
                             document.processing_metadata.reconciliation_report.is_invariant_matched
-                              ? 'var(--dsw-static-green-500)'
-                              : document.processing_metadata.reconciliation_report.failed_ratio < 0.05
-                              ? 'var(--dsw-static-amber-500)'
-                              : 'var(--dsw-static-red-500)',
-                        }}
-                      >
+                              ? css.credentialDotSuccess
+                              : css.credentialDotWarning
+                          )}
+                        />
+                        <span className={css.rowName}>Đối soát tính toàn vẹn (Reconciliation Gate)</span>
+                      </div>
+                      <span className={css.tagBadge}>
                         {document.processing_metadata.reconciliation_report.is_invariant_matched
-                          ? '100% Khớp đối soát'
-                          : `Tỷ lệ lỗi: ${(document.processing_metadata.reconciliation_report.failed_ratio * 100).toFixed(1)}%`}
-                      </Pill>
-                    </div>
-
-                    <div className={css.metaRow}>
-                      <span className={css.metaKey}>Số đoạn văn bản kỳ vọng</span>
-                      <span className={css.metaVal}>
-                        {document.processing_metadata.reconciliation_report.expected_chunk_count ?? document.chunk_count} chunks
+                          ? '100% Khớp'
+                          : `Lỗi: ${(document.processing_metadata.reconciliation_report.failed_ratio * 100).toFixed(1)}%`}
                       </span>
                     </div>
 
-                    <div className={css.metaRow}>
-                      <span className={css.metaKey}>Số liên kết tài liệu (Links)</span>
-                      <span className={css.metaVal}>
-                        {document.processing_metadata.reconciliation_report.actual_link_count ?? document.chunk_count} links
-                      </span>
-                    </div>
-
-                    <div className={css.metaRow}>
-                      <span className={css.metaKey}>Số Vector Qdrant đồng bộ</span>
-                      <span className={css.metaVal}>
-                        {document.processing_metadata.reconciliation_report.actual_embedded_count ?? document.chunk_count} vectors
-                      </span>
-                    </div>
-
-                    {document.processing_metadata.reconciliation_report.failed_chunk_count > 0 && (
-                      <div className={css.metaRow}>
-                        <span className={css.metaKey} style={{ color: 'var(--dsw-static-amber-500)' }}>Số chunk lỗi</span>
-                        <span className={css.metaVal} style={{ color: 'var(--dsw-static-amber-500)' }}>
-                          {document.processing_metadata.reconciliation_report.failed_chunk_count} chunks
+                    <div className={css.grid2}>
+                      <div className={css.metaItem}>
+                        <span className={css.metaKey}>Số đoạn văn bản kỳ vọng</span>
+                        <span className={css.metaVal}>
+                          {document.processing_metadata.reconciliation_report.expected_chunk_count ?? document.chunk_count} chunks
                         </span>
                       </div>
-                    )}
+                      <div className={css.metaItem}>
+                        <span className={css.metaKey}>Số liên kết tài liệu (Links)</span>
+                        <span className={css.metaVal}>
+                          {document.processing_metadata.reconciliation_report.actual_link_count ?? document.chunk_count} links
+                        </span>
+                      </div>
+                      <div className={css.metaItem}>
+                        <span className={css.metaKey}>Số Vector Qdrant đồng bộ</span>
+                        <span className={css.metaVal}>
+                          {document.processing_metadata.reconciliation_report.actual_embedded_count ?? document.chunk_count} vectors
+                        </span>
+                      </div>
+                      {document.processing_metadata.reconciliation_report.failed_chunk_count > 0 && (
+                        <div className={css.metaItem}>
+                          <span className={css.metaKey} style={{ color: 'var(--dsw-alias-state-error-primary)' }}>Số chunk lỗi</span>
+                          <span className={css.metaVal} style={{ color: 'var(--dsw-alias-state-error-primary)' }}>
+                            {document.processing_metadata.reconciliation_report.failed_chunk_count} chunks
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {/* Quality Gate Assessment */}
                 {document.processing_metadata?.quality_score !== undefined && (
-                  <div className={css.sectionBox}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div className={css.sectionBoxTitle}>Kiểm định Chất lượng Bóc tách (Quality Gate)</div>
-                      <Pill
-                        style={{
-                          color:
+                  <div className={css.rowCard}>
+                    <div className={css.rowHead}>
+                      <div className={css.rowIdentity}>
+                        <span
+                          className={clsx(
+                            css.credentialDot,
                             document.processing_metadata.quality_score >= 0.75
-                              ? 'var(--dsw-static-green-500)'
-                              : document.processing_metadata.quality_score >= 0.5
-                              ? 'var(--dsw-static-amber-500)'
-                              : 'var(--dsw-static-red-500)',
-                        }}
-                      >
-                        Điểm chất lượng: {Math.round(document.processing_metadata.quality_score * 100)}%
-                      </Pill>
-                    </div>
-
-                    <div className={css.metaRow}>
-                      <span className={css.metaKey}>Profile bóc tách tối ưu</span>
-                      <span className={css.metaVal} style={{ fontWeight: 600, color: 'var(--dsw-alias-brand-primary)' }}>
-                        {document.processing_metadata.final_parse_profile || 'DIGITAL_BOOK'}
+                              ? css.credentialDotSuccess
+                              : css.credentialDotWarning
+                          )}
+                        />
+                        <span className={css.rowName}>Kiểm định chất lượng bóc tách (Quality Gate)</span>
+                      </div>
+                      <span className={css.tagBadge}>
+                        Điểm: {Math.round(document.processing_metadata.quality_score * 100)}%
                       </span>
                     </div>
 
-                    {document.processing_metadata.text_density !== undefined && (
-                      <div className={css.metaRow}>
-                        <span className={css.metaKey}>Mật độ văn bản</span>
-                        <span className={css.metaVal}>
-                          {Math.round(document.processing_metadata.text_density)} ký tự / trang
+                    <div className={css.grid2}>
+                      <div className={css.metaItem}>
+                        <span className={css.metaKey}>Profile bóc tách tối ưu</span>
+                        <span className={css.metaVal} style={{ color: 'var(--dsw-alias-brand-primary)' }}>
+                          {document.processing_metadata.final_parse_profile || 'DIGITAL_BOOK'}
                         </span>
                       </div>
-                    )}
-
-                    {document.processing_metadata.valid_char_ratio !== undefined && (
-                      <div className={css.metaRow}>
-                        <span className={css.metaKey}>Tỷ lệ ký tự hợp lệ</span>
-                        <span className={css.metaVal}>
-                          {(document.processing_metadata.valid_char_ratio * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                    )}
+                      {document.processing_metadata.text_density !== undefined && (
+                        <div className={css.metaItem}>
+                          <span className={css.metaKey}>Mật độ văn bản</span>
+                          <span className={css.metaVal}>
+                            {Math.round(document.processing_metadata.text_density)} ký tự / trang
+                          </span>
+                        </div>
+                      )}
+                      {document.processing_metadata.valid_char_ratio !== undefined && (
+                        <div className={css.metaItem}>
+                          <span className={css.metaKey}>Tỷ lệ ký tự hợp lệ</span>
+                          <span className={css.metaVal}>
+                            {(document.processing_metadata.valid_char_ratio * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
 
                     {Array.isArray(document.processing_metadata.quality_warnings) &&
                       document.processing_metadata.quality_warnings.length > 0 && (
-                        <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--dsw-static-amber-500)' }}>
+                        <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--dsw-alias-state-warning-primary)' }}>
                             Cảnh báo kiểm định:
                           </span>
                           {document.processing_metadata.quality_warnings.map((w: string, idx: number) => (
-                            <div key={idx} style={{ fontSize: 12.5, color: 'var(--dsw-alias-label-secondary)', paddingLeft: 8, borderLeft: '2px solid var(--dsw-static-amber-500)' }}>
+                            <div key={idx} style={{ fontSize: 12.5, color: 'var(--dsw-alias-label-secondary)', paddingLeft: 8, borderLeft: '2px solid var(--dsw-alias-state-warning-primary)' }}>
                               • {w}
                             </div>
                           ))}
@@ -398,102 +422,110 @@ export function DocumentDetailModal({
                   </div>
                 )}
 
+                {/* AI Summary */}
                 {previewData?.summary && (
-                  <div className={css.sectionBox}>
-                    <div className={css.sectionBoxTitle}>Tóm tắt nội dung AI (Docling Summary)</div>
-                    <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: 'var(--dsw-alias-label-secondary)' }}>
+                  <div className={css.rowCard}>
+                    <div className={css.rowName}>Tóm tắt nội dung AI (Docling Summary)</div>
+                    <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: 'var(--dsw-alias-label-secondary)' }}>
                       {previewData.summary}
                     </p>
                   </div>
                 )}
 
-                <div className={css.sectionBox}>
-                  <div className={css.sectionBoxTitle}>Thông tin Định danh & Lưu trữ</div>
-                  <div className={css.metaRow}>
-                    <span className={css.metaKey}>Document ID</span>
-                    <span className={css.metaVal}>{document.id}</span>
-                  </div>
-                  <div className={css.metaRow}>
-                    <span className={css.metaKey}>Project ID</span>
-                    <span className={css.metaVal}>{document.project_id}</span>
-                  </div>
-                  <div className={css.metaRow}>
-                    <span className={css.metaKey}>Tên tệp gốc</span>
-                    <span className={css.metaVal}>{document.file_name}</span>
-                  </div>
-                  <div className={css.metaRow}>
-                    <span className={css.metaKey}>Ngày tải lên</span>
-                    <span className={css.metaVal}>{new Date(document.created_at).toLocaleString('vi-VN')}</span>
-                  </div>
-                  {document.updated_at && (
-                    <div className={css.metaRow}>
-                      <span className={css.metaKey}>Cập nhật lần cuối</span>
-                      <span className={css.metaVal}>{new Date(document.updated_at).toLocaleString('vi-VN')}</span>
+                {/* Identification & Storage Metadata */}
+                <div className={css.rowCard}>
+                  <div className={css.rowName}>Thông tin định danh & lưu trữ</div>
+                  <div className={css.grid2}>
+                    <div className={css.metaItem}>
+                      <span className={css.metaKey}>Document ID</span>
+                      <span className={css.metaVal}>{document.id}</span>
                     </div>
-                  )}
-                  {document.storage_path && (
-                    <div className={css.metaRow}>
-                      <span className={css.metaKey}>Đường dẫn tệp gốc</span>
-                      <span className={css.metaVal}>{document.storage_path}</span>
+                    <div className={css.metaItem}>
+                      <span className={css.metaKey}>Project ID</span>
+                      <span className={css.metaVal}>{document.project_id}</span>
                     </div>
-                  )}
-                  {document.markdown_path && (
-                    <div className={css.metaRow}>
-                      <span className={css.metaKey}>Đường dẫn Markdown bóc tách</span>
-                      <span className={css.metaVal}>{document.markdown_path}</span>
+                    <div className={css.metaItem}>
+                      <span className={css.metaKey}>Tên tệp gốc</span>
+                      <span className={css.metaVal}>{document.file_name}</span>
                     </div>
-                  )}
+                    <div className={css.metaItem}>
+                      <span className={css.metaKey}>Ngày tải lên</span>
+                      <span className={css.metaVal}>{new Date(document.created_at).toLocaleString('vi-VN')}</span>
+                    </div>
+                    {document.updated_at && (
+                      <div className={css.metaItem}>
+                        <span className={css.metaKey}>Cập nhật lần cuối</span>
+                        <span className={css.metaVal}>{new Date(document.updated_at).toLocaleString('vi-VN')}</span>
+                      </div>
+                    )}
+                    {document.storage_path && (
+                      <div className={css.metaItem}>
+                        <span className={css.metaKey}>Đường dẫn tệp gốc</span>
+                        <span className={css.metaVal}>{document.storage_path}</span>
+                      </div>
+                    )}
+                    {document.markdown_path && (
+                      <div className={css.metaItem}>
+                        <span className={css.metaKey}>Đường dẫn Markdown bóc tách</span>
+                        <span className={css.metaVal}>{document.markdown_path}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
+                {/* Action Buttons */}
                 <div className={css.actionRow}>
-                  <Button variant="outline" onClick={handleDownloadOriginalFile}>
-                    <IconDownloadOutline16 size={14} style={{ marginRight: 6 }} />
-                    Tải về tệp gốc
-                  </Button>
+                  <button
+                    type="button"
+                    className={css.pillButton}
+                    onClick={handleDownloadOriginalFile}
+                  >
+                    <IconDownloadOutline16 size={13} />
+                    <span>Tải về tệp gốc</span>
+                  </button>
                   {onOpenPreview && (
-                    <Button
-                      variant="secondary"
+                    <button
+                      type="button"
+                      className={clsx(css.pillButton, css.pillButtonPrimary)}
                       onClick={() => {
                         onClose()
                         onOpenPreview(document.id)
                       }}
                     >
-                      <IconBrowseOutline16 size={14} style={{ marginRight: 6 }} />
-                      Mở xem trước Markdown
-                    </Button>
+                      <IconBrowseOutline16 size={13} />
+                      <span>Mở xem trước Markdown</span>
+                    </button>
                   )}
                 </div>
               </>
             )}
 
-            {/* Tab 2: Chunk Search & Inspection */}
+            {/* Tab 2: Chunks Search */}
             {activeTab === 'chunks' && (
               <>
-                <div className={css.searchHeader}>
-                  <div className={css.searchBar}>
-                    <IconSearchOutline16 size={16} style={{ color: 'var(--dsw-alias-label-tertiary)' }} />
-                    <input
-                      type="text"
-                      className={css.searchInput}
-                      placeholder="Tìm kiếm từ khóa trong các đoạn văn bản (Chunks)..."
-                      value={chunkQuery}
-                      onChange={(e) => setChunkQuery(e.target.value)}
-                    />
-                    {chunkQuery && (
-                      <button
-                        type="button"
-                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--dsw-alias-label-tertiary)', padding: 0 }}
-                        onClick={() => setChunkQuery('')}
-                      >
-                        <IconCloseOutline16 size={14} />
-                      </button>
-                    )}
-                  </div>
+                <div className={css.searchBar}>
+                  <IconSearchOutline16 size={15} style={{ color: 'var(--dsw-alias-label-tertiary)', flexShrink: 0 }} />
+                  <input
+                    type="text"
+                    className={css.searchInput}
+                    placeholder="Tìm kiếm từ khóa trong các đoạn văn bản (Chunks)..."
+                    value={chunkQuery}
+                    onChange={(e) => setChunkQuery(e.target.value)}
+                  />
+                  {chunkQuery && (
+                    <button
+                      type="button"
+                      style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--dsw-alias-label-tertiary)', padding: 0 }}
+                      onClick={() => setChunkQuery('')}
+                    >
+                      <IconCloseOutline16 size={14} />
+                    </button>
+                  )}
+                </div>
 
-                  <div className={css.searchStats}>
-                    Hiển thị <strong>{filteredChunks.length}</strong> / <strong>{chunks.length}</strong> chunks
-                    {chunkQuery && ` (Khớp với "${chunkQuery}")`}
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5, color: 'var(--dsw-alias-label-tertiary)' }}>
+                  <span>Hiển thị <strong>{filteredChunks.length}</strong> / <strong>{chunks.length}</strong> chunks</span>
+                  {chunkQuery && <span className={css.tagBadge}>{filteredChunks.length} kết quả</span>}
                 </div>
 
                 {loading ? (
@@ -502,7 +534,7 @@ export function DocumentDetailModal({
                     Đang nạp cấu trúc Chunks...
                   </div>
                 ) : filteredChunks.length === 0 ? (
-                  <div style={{ padding: 48, textAlign: 'center', color: 'var(--dsw-alias-label-tertiary)' }}>
+                  <div className={css.rowCard} style={{ textAlign: 'center', padding: '36px 20px', color: 'var(--dsw-alias-label-tertiary)' }}>
                     Không tìm thấy chunk nào khớp với từ khóa tìm kiếm.
                   </div>
                 ) : (
@@ -514,37 +546,37 @@ export function DocumentDetailModal({
 
                       return (
                         <div key={chunk.index} className={css.chunkCard}>
-                          <div className={css.chunkHeader}>
-                            <div className={css.chunkHeaderLeft}>
-                              <div className={css.chunkBadge}>
-                                <span>#Chunk {chunk.index}</span>
-                                <span style={{ opacity: 0.6, fontWeight: 400 }}>• ~{chunk.tokens} tokens</span>
-                              </div>
+                          <div className={css.rowHead}>
+                            <div className={css.rowIdentity}>
+                              <span className={css.tagBadge}>#Chunk {chunk.index}</span>
+                              <span style={{ fontSize: 12, color: 'var(--dsw-alias-label-tertiary)' }}>
+                                ~{chunk.tokens} tokens
+                              </span>
                               {chunk.score !== null && (
-                                <span className={css.matchScore}>
+                                <span className={css.tagBadge} style={{ color: 'var(--dsw-alias-state-success-primary)' }}>
                                   Độ khớp: {chunk.score}%
                                 </span>
                               )}
                             </div>
 
                             <Tooltip label="Sao chép đoạn trích này" delayMs={300}>
-                              <Button
-                                variant="ghost"
-                                size="sm"
+                              <button
+                                type="button"
+                                className={css.pillButton}
                                 onClick={() => handleCopyChunk(chunk.text, chunk.index)}
                               >
                                 {copiedChunkIdx === chunk.index ? (
                                   <>
-                                    <IconCheckOutline16 size={13} style={{ color: 'var(--dsw-static-green-500)', marginRight: 4 }} />
-                                    <span style={{ fontSize: 12, color: 'var(--dsw-static-green-500)' }}>Đã chép</span>
+                                    <IconCheckOutline16 size={13} style={{ color: 'var(--dsw-alias-state-success-primary)' }} />
+                                    <span style={{ color: 'var(--dsw-alias-state-success-primary)' }}>Đã chép</span>
                                   </>
                                 ) : (
                                   <>
-                                    <IconCopyOutline16 size={13} style={{ marginRight: 4 }} />
-                                    <span style={{ fontSize: 12 }}>Chép</span>
+                                    <IconCopyOutline16 size={13} />
+                                    <span>Chép</span>
                                   </>
                                 )}
-                              </Button>
+                              </button>
                             </Tooltip>
                           </div>
 
@@ -586,75 +618,125 @@ export function DocumentDetailModal({
             {/* Tab 3: Vector & Qdrant */}
             {activeTab === 'vector' && (
               <>
-                <div className={css.gridStats}>
-                  <div className={css.statCard}>
-                    <div className={css.statLabel}>Vector Dimensions</div>
-                    <div className={css.statValue}>1536 / 768</div>
+                <div className={css.grid2}>
+                  <div className={css.rowCard}>
+                    <span className={css.metaKey}>Vector Dimensions</span>
+                    <span className={css.metaVal} style={{ color: 'var(--dsw-alias-brand-primary)' }}>
+                      1536 / 768
+                    </span>
                   </div>
-                  <div className={css.statCard}>
-                    <div className={css.statLabel}>Distance Metric</div>
-                    <div className={css.statValue} style={{ color: 'var(--dsw-alias-brand-primary)' }}>
-                      Cosine
-                    </div>
+                  <div className={css.rowCard}>
+                    <span className={css.metaKey}>Distance Metric</span>
+                    <span className={css.metaVal}>Cosine</span>
                   </div>
-                  <div className={css.statCard}>
-                    <div className={css.statLabel}>Qdrant Collection</div>
-                    <div className={css.statValue} style={{ fontSize: 14, fontFamily: 'var(--ds-font-family-code)' }}>
-                      ragflash_documents
+                  <div className={css.rowCard}>
+                    <span className={css.metaKey}>Qdrant Collection</span>
+                    <span className={css.metaVal}>ragflash_documents</span>
+                  </div>
+                  <div className={css.rowCard}>
+                    <span className={css.metaKey}>Chỉ mục HNSW</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span className={clsx(css.credentialDot, css.credentialDotSuccess)} />
+                      <span className={css.metaVal} style={{ color: 'var(--dsw-alias-state-success-primary)' }}>
+                        Indexed & Ready
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                <div className={css.sectionBox}>
-                  <div className={css.sectionBoxTitle}>Thông số Vector Embeddings</div>
-                  <div className={css.metaRow}>
-                    <span className={css.metaKey}>Embedding Model</span>
-                    <span className={css.metaVal}>text-embedding-3-small (hoặc BGE-M3 Multilingual)</span>
-                  </div>
-                  <div className={css.metaRow}>
-                    <span className={css.metaKey}>Vector Storage Engine</span>
-                    <span className={css.metaVal}>Qdrant Vector Database</span>
-                  </div>
-                  <div className={css.metaRow}>
-                    <span className={css.metaKey}>Payload Filter Keys</span>
-                    <span className={css.metaVal}>project_id, document_id, chunk_index</span>
-                  </div>
-                  <div className={css.metaRow}>
-                    <span className={css.metaKey}>Trạng thái lập chỉ mục (HNSW Index)</span>
-                    <span className={css.metaVal} style={{ color: 'var(--dsw-static-green-500)' }}>
-                      ✓ Sẵn sàng cho Hybrid Search & Reranking
-                    </span>
+                <div className={css.rowCard}>
+                  <div className={css.rowName}>Thông số Vector Embeddings & Lưu trữ</div>
+                  <div className={css.grid2}>
+                    <div className={css.metaItem}>
+                      <span className={css.metaKey}>Embedding Model</span>
+                      <span className={css.metaVal}>text-embedding-3-small (hoặc BGE-M3)</span>
+                    </div>
+                    <div className={css.metaItem}>
+                      <span className={css.metaKey}>Vector Storage Engine</span>
+                      <span className={css.metaVal}>Qdrant Vector Database</span>
+                    </div>
+                    <div className={css.metaItem}>
+                      <span className={css.metaKey}>Payload Filter Keys</span>
+                      <span className={css.metaVal}>project_id, document_id, chunk_index</span>
+                    </div>
+                    <div className={css.metaItem}>
+                      <span className={css.metaKey}>Trạng thái lập chỉ mục (HNSW)</span>
+                      <span className={css.metaVal} style={{ color: 'var(--dsw-alias-state-success-primary)' }}>
+                        ✓ Sẵn sàng cho Hybrid Search & Reranking
+                      </span>
+                    </div>
                   </div>
                 </div>
               </>
             )}
 
-            {/* Tab 4: Markdown View */}
+            {/* Tab 4: Markdown */}
             {activeTab === 'markdown' && (
               <>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                  <div style={{ fontSize: 13, color: 'var(--dsw-alias-label-secondary)' }}>
-                    Nội dung cấu trúc Markdown được bóc tách tự động bởi <strong>Docling Parser</strong>.
-                  </div>
-                  {previewData?.content && (
+                <div className={css.rowCard}>
+                  <div className={css.rowHead}>
+                    <div className={css.rowIdentity}>
+                      <span className={css.rowName}>Văn bản Markdown bóc tách</span>
+                    </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Button variant="outline" size="sm" onClick={handleDownloadMarkdownFile}>
-                        <IconDownloadOutline16 size={13} style={{ marginRight: 4 }} />
-                        <span>Xuất file .md</span>
-                      </Button>
-                      <Button variant="secondary" size="sm" onClick={handleCopyAllMarkdown}>
-                        {copiedAllMd ? (
-                          <>
-                            <IconCheckOutline16 size={13} style={{ color: 'var(--dsw-static-green-500)', marginRight: 4 }} />
-                            <span style={{ color: 'var(--dsw-static-green-500)' }}>Đã chép toàn bộ</span>
-                          </>
-                        ) : (
-                          <>
-                            <IconCopyOutline16 size={13} style={{ marginRight: 4 }} />
-                            <span>Chép Markdown</span>
-                          </>
-                        )}
-                      </Button>
+                      {previewData?.content && (
+                        <>
+                          <button
+                            type="button"
+                            className={css.pillButton}
+                            onClick={handleDownloadMarkdownFile}
+                          >
+                            <IconDownloadOutline16 size={13} />
+                            <span>Xuất .md</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={css.pillButton}
+                            onClick={handleCopyAllMarkdown}
+                          >
+                            {copiedAllMd ? (
+                              <>
+                                <IconCheckOutline16 size={13} style={{ color: 'var(--dsw-alias-state-success-primary)' }} />
+                                <span style={{ color: 'var(--dsw-alias-state-success-primary)' }}>Đã chép</span>
+                              </>
+                            ) : (
+                              <>
+                                <IconCopyOutline16 size={13} />
+                                <span>Chép Markdown</span>
+                              </>
+                            )}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 12.5, color: 'var(--dsw-alias-label-secondary)' }}>
+                    Nội dung cấu trúc Markdown được bóc tách tự động bởi <strong>Docling Parser</strong>, giữ nguyên cấu trúc bảng biểu, danh sách, tiêu đề từ tệp gốc.
+                  </p>
+                </div>
+
+                {/* Search Toolbar for Markdown */}
+                <div className={css.searchBar}>
+                  <IconSearchOutline16 size={15} style={{ color: 'var(--dsw-alias-label-tertiary)', flexShrink: 0 }} />
+                  <input
+                    type="text"
+                    className={css.searchInput}
+                    placeholder="Tìm kiếm từ khóa trong văn bản Markdown..."
+                    value={mdQuery}
+                    onChange={(e) => setMdQuery(e.target.value)}
+                  />
+                  {mdQuery && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 12, color: 'var(--dsw-alias-brand-primary)', whiteSpace: 'nowrap', fontWeight: 500 }}>
+                        {((previewData?.content || '').match(new RegExp(mdQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')) || []).length} kết quả
+                      </span>
+                      <button
+                        type="button"
+                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--dsw-alias-label-tertiary)', padding: 0 }}
+                        onClick={() => setMdQuery('')}
+                      >
+                        <IconCloseOutline16 size={14} />
+                      </button>
                     </div>
                   )}
                 </div>
@@ -672,7 +754,7 @@ export function DocumentDetailModal({
               </>
             )}
           </div>
-        </main>
+        </div>
       </div>
     </div>
   )
