@@ -240,7 +240,7 @@ ${currentReport.summary}
 ## ⚡ Điểm mạnh nổi bật:
 ${currentReport.strengths.map((s) => `- ${s}`).join('\n')}
 
-## ⚠️ Điểm nghẽn phát hiện:
+##  Điểm nghẽn phát hiện:
 ${currentReport.bottlenecks.map((b) => `- ${b}`).join('\n')}
 
 ## 💡 Khuyến nghị tối ưu:
@@ -337,7 +337,7 @@ ${currentReport.recommendations.map((r) => `- ${r}`).join('\n')}
                 <div className={css.healthTextWrap}>
                   <div className={css.healthTitleRow}>
                     <span className={css.healthStatusBadge}>
-                      {currentReport.healthScore >= 90 ? '🌟 Hoạt động Rất Tối Ưu' : '⚠️ Cần Lưu Ý Tối Ưu'}
+                      {currentReport.healthScore >= 90 ? '🌟 Hoạt động Rất Tối Ưu' : ' Cần Lưu Ý Tối Ưu'}
                     </span>
                     <span className={css.healthTimeText}>{currentReport.timestamp}</span>
                   </div>

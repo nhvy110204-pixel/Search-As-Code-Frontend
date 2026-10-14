@@ -42,6 +42,15 @@ export interface SessionStats {
   outputTokens?: number
 }
 
+export interface CitationSource {
+  index: number
+  documentId: string
+  fileName: string
+  pageNumber?: number
+  score?: number
+  snippet: string
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
@@ -49,6 +58,7 @@ export interface ChatMessage {
   reasoning?: string
   isThinking?: boolean
   steps?: ToolStep[]
+  citations?: CitationSource[]
   attachments?: AttachmentFile[]
   producedFiles?: ProducedFile[]
   feedback?: 'like' | 'dislike' | null

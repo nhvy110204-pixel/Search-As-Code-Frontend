@@ -388,16 +388,95 @@ export const useChatStore = create<ChatStore>((set, get) => {
           ? content.slice(0, 30) + (content.length > 30 ? '...' : '')
           : currentTitle
 
+      let realSessionId = activeSession.id
+      const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(realSessionId)
+
+      if (!isValidUuid && authState.isAuthenticated) {
+        let targetProjectId = useProjectStore.getState().activeProjectId
+        if (!targetProjectId) {
+          const currentProjects = useProjectStore.getState().projects
+          if (currentProjects && currentProjects.length > 0) {
+            targetProjectId = currentProjects[0].id
+            useProjectStore.getState().setActiveProject(targetProjectId)
+          } else {
+            try {
+              await useProjectStore.getState().fetchProjects()
+              const fetched = useProjectStore.getState().projects
+              if (fetched && fetched.length > 0) {
+                targetProjectId = fetched[0].id
+                useProjectStore.getState().setActiveProject(targetProjectId)
+              }
+            } catch (pErr) {
+              console.error('Failed to fetch projects:', pErr)
+            }
+          }
+        }
+
+        if (targetProjectId) {
+          try {
+            const created = await chatSessionApi.create(targetProjectId, newTitle)
+            if (created && created.id) {
+              realSessionId = created.id
+            }
+          } catch (e: any) {
+            console.error('Failed to create backend chat session:', e)
+            set((state) => {
+              const nextSessions = state.sessions.map((s) =>
+                s.id === activeSession.id
+                  ? {
+                    ...s,
+                    messages: [
+                      ...s.messages,
+                      userMessage,
+                      {
+                        ...assistantMessage,
+                        isThinking: false,
+                        content: `⚠️ **Không thể khởi tạo phiên trò chuyện trên hệ thống:** ${e.message || 'Lỗi kết nối máy chủ'}. Vui lòng thử lại.`,
+                      },
+                    ],
+                  }
+                  : s
+              )
+              saveSessions(nextSessions)
+              return { sessions: nextSessions, isStreaming: false }
+            })
+            return
+          }
+        } else {
+          set((state) => {
+            const nextSessions = state.sessions.map((s) =>
+              s.id === activeSession.id
+                ? {
+                  ...s,
+                  messages: [
+                    ...s.messages,
+                    userMessage,
+                    {
+                      ...assistantMessage,
+                      isThinking: false,
+                      content: '⚠️ **Chưa có dự án nào được chọn:** Vui lòng tạo hoặc chọn một dự án trong thanh bên trước khi bắt đầu trò chuyện.',
+                    },
+                  ],
+                }
+                : s
+            )
+            saveSessions(nextSessions)
+            return { sessions: nextSessions, isStreaming: false }
+          })
+          return
+        }
+      }
+
       const updatedMessages = [...activeSession.messages, userMessage, assistantMessage]
 
       set((state) => {
         const nextSessions = state.sessions.map((s) =>
           s.id === activeSession.id
-            ? { ...s, title: newTitle, updatedAt: Date.now(), messages: updatedMessages }
+            ? { ...s, id: realSessionId, title: newTitle, updatedAt: Date.now(), messages: updatedMessages }
             : s
         )
         saveSessions(nextSessions)
-        return { sessions: nextSessions, isStreaming: true }
+        return { sessions: nextSessions, activeSessionId: realSessionId, isStreaming: true }
       })
 
       const controller = new AbortController()
@@ -412,7 +491,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
           onThinkingChunk: (chunk) => {
             set((state) => {
               const nextSessions = state.sessions.map((s) => {
-                if (s.id !== activeSession.id) return s
+                if (s.id !== realSessionId && s.id !== activeSession.id) return s
                 return {
                   ...s,
                   messages: s.messages.map((m) =>
@@ -428,7 +507,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
           onThinkingDone: () => {
             set((state) => {
               const nextSessions = state.sessions.map((s) => {
-                if (s.id !== activeSession.id) return s
+                if (s.id !== realSessionId && s.id !== activeSession.id) return s
                 return {
                   ...s,
                   messages: s.messages.map((m) =>
@@ -442,7 +521,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
           onContentChunk: (chunk) => {
             set((state) => {
               const nextSessions = state.sessions.map((s) => {
-                if (s.id !== activeSession.id) return s
+                if (s.id !== realSessionId && s.id !== activeSession.id) return s
                 return {
                   ...s,
                   messages: s.messages.map((m) =>
@@ -458,7 +537,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
           onStepUpdate: (step) => {
             set((state) => {
               const nextSessions = state.sessions.map((s) => {
-                if (s.id !== activeSession.id) return s
+                if (s.id !== realSessionId && s.id !== activeSession.id) return s
                 return {
                   ...s,
                   messages: s.messages.map((m) => {
@@ -475,7 +554,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
           onProducedFiles: (files) => {
             set((state) => {
               const nextSessions = state.sessions.map((s) => {
-                if (s.id !== activeSession.id) return s
+                if (s.id !== realSessionId && s.id !== activeSession.id) return s
                 return {
                   ...s,
                   messages: s.messages.map((m) =>
@@ -486,27 +565,30 @@ export const useChatStore = create<ChatStore>((set, get) => {
               return { sessions: nextSessions }
             })
           },
-          onDone: () => {
+          onDone: (stats, citations, finalContent) => {
             const elapsedSec = (performance.now() - startTime) / 1000
             set((state) => {
-              const currentActive = state.sessions.find((s) => s.id === activeSession.id)
+              const currentActive = state.sessions.find((s) => s.id === realSessionId || s.id === activeSession.id)
               const finalMsg = currentActive?.messages.find((m) => m.id === assistantMsgId)
-              const approxTokens = Math.ceil(((finalMsg?.content || '').length + (finalMsg?.reasoning || '').length) / 3.5)
+              const approxTokens = Math.ceil(((finalMsg?.content || finalContent || '').length + (finalMsg?.reasoning || '').length) / 3.5)
+              const finalStats = {
+                durationMs: stats?.durationMs || Math.round(elapsedSec * 1000),
+                tokens: stats?.tokens || approxTokens,
+                tps: stats?.tps || Math.round(approxTokens / (elapsedSec || 1)),
+              }
 
               const nextSessions = state.sessions.map((s) => {
-                if (s.id !== activeSession.id) return s
+                if (s.id !== realSessionId && s.id !== activeSession.id) return s
                 return {
                   ...s,
                   messages: s.messages.map((m) =>
                     m.id === assistantMsgId
                       ? {
                         ...m,
+                        content: m.content || finalContent || '',
                         isThinking: false,
-                        stats: {
-                          durationMs: Math.round(elapsedSec * 1000),
-                          tokens: approxTokens,
-                          tps: Math.round(approxTokens / (elapsedSec || 1)),
-                        },
+                        citations: citations && citations.length > 0 ? citations : m.citations,
+                        stats: finalStats,
                       }
                       : m
                   ),
@@ -519,7 +601,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
           onError: (err) => {
             set((state) => {
               const nextSessions = state.sessions.map((s) => {
-                if (s.id !== activeSession.id) return s
+                if (s.id !== realSessionId && s.id !== activeSession.id) return s
                 return {
                   ...s,
                   messages: s.messages.map((m) =>
@@ -527,7 +609,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
                       ? {
                         ...m,
                         isThinking: false,
-                        content: (m.content || '') + `\n\n> Lỗi kết nối: ${err.message}`,
+                        content: (m.content || '') + `\n\n>  **Lỗi xử lý:** ${err.message}`,
                       }
                       : m
                   ),
@@ -539,7 +621,7 @@ export const useChatStore = create<ChatStore>((set, get) => {
           },
         },
         controller.signal,
-        activeSession.id
+        realSessionId
       )
     },
   }

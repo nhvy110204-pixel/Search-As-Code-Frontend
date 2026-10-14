@@ -1,4 +1,13 @@
-import type { ChatMessage, ToolStep, ProducedFile, BackendChatSession, BackendChatSessionListResponse, BackendChatMessage } from '@/types/chat'
+import type {
+  ChatMessage,
+  ToolStep,
+  ProducedFile,
+  BackendChatSession,
+  BackendChatSessionListResponse,
+  BackendChatMessage,
+  CitationSource,
+  MessageStats
+} from '@/types/chat'
 import type { UserProfile, TokenResponse, LoginCredentials, RegisterData, UserUpdateRequest } from '@/types/auth'
 import type {
   ProjectResponse,
@@ -26,7 +35,7 @@ export interface StreamCallbacks {
   onContentChunk?: (chunk: string) => void
   onStepUpdate?: (step: ToolStep) => void
   onProducedFiles?: (files: ProducedFile[]) => void
-  onDone?: () => void
+  onDone?: (stats?: MessageStats, citations?: CitationSource[], finalContent?: string) => void
   onError?: (error: Error) => void
 }
 
@@ -673,12 +682,21 @@ export async function streamChatMessage(
     const token = useAuthStore.getState().accessToken
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'Accept': 'text/event-stream',
     }
     if (token) {
       headers['Authorization'] = `Bearer ${token}`
     }
 
-    const lastMessage = messages[messages.length - 1]?.content || ''
+    const lastUserMessage =
+      [...messages].reverse().find((m) => m.role === 'user')?.content?.trim() ||
+      messages[messages.length - 1]?.content?.trim() ||
+      ''
+
+    if (!lastUserMessage) {
+      throw new Error('Nội dung tin nhắn không được để trống')
+    }
+
     const targetSessionId = sessionId || '00000000-0000-0000-0000-000000000000'
 
     const response = await fetch(`${API_V1_URL}/chat/stream`, {
@@ -686,11 +704,11 @@ export async function streamChatMessage(
       headers,
       body: JSON.stringify({
         session_id: targetSessionId,
-        message: lastMessage,
+        message: lastUserMessage,
         client_request_id: `req-${Date.now()}`,
       }),
       signal,
-    })
+    }).catch(handleNetworkError)
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -709,6 +727,166 @@ export async function streamChatMessage(
     const decoder = new TextDecoder()
     let buffer = ''
     let inThinkTag = false
+    let currentEventName = ''
+    let currentDataStr = ''
+
+    const processSseFrame = (eventName: string, dataStr: string) => {
+      if (!dataStr) return
+      if (dataStr === '[DONE]') {
+        callbacks.onDone?.()
+        return
+      }
+
+      try {
+        const data = JSON.parse(dataStr)
+
+        // 1. Error Event
+        if (eventName === 'error' || data.event === 'error' || data.code === 'agent_failure' || data.code === 'cancelled') {
+          callbacks.onError?.(new Error(data.message || data.code || 'Lỗi xử lý từ hệ thống'))
+          return
+        }
+
+        // 2. Planning & CoT Reasoning Events
+        if (eventName === 'agent.plan' || eventName === 'agent.thinking' || data.event === 'thinking') {
+          if (data.status === 'started') {
+            callbacks.onThinkingChunk?.('Đang phân tích câu hỏi và lập kế hoạch truy vấn...\n')
+          } else if (data.plan) {
+            callbacks.onThinkingChunk?.(data.plan + '\n')
+            callbacks.onThinkingDone?.()
+          } else if (data.content) {
+            callbacks.onThinkingChunk?.(data.content)
+          }
+          return
+        }
+
+        // 3. Vector Retrieval / Search Visualizer Event
+        if (eventName === 'agent.retrieval' || eventName === 'agent.search') {
+          const hitTitle = data.title || data.file_name || 'Tra cứu Qdrant'
+          const pageInfo = data.page_number ? ` (Trang ${data.page_number})` : ''
+          const scoreInfo = data.score !== undefined ? ` [Score: ${(Number(data.score) * 100).toFixed(0)}%]` : ''
+          const fullTitle = `🔍 ${hitTitle}${pageInfo}${scoreInfo}`
+          const outputSnippet = data.snippet || data.content || data.output || 'Đã đối soát khớp đoạn trích liên quan.'
+
+          callbacks.onStepUpdate?.({
+            id: `step-retrieval-${data.id || Date.now()}`,
+            title: fullTitle,
+            type: 'search',
+            output: outputSnippet,
+            status: 'ok',
+          })
+          return
+        }
+
+        // 4. Code Generation / Reasoner Event
+        if (eventName === 'agent.code') {
+          const isDone = data.status === 'completed'
+          callbacks.onStepUpdate?.({
+            id: `step-code-${data.message_id || 'code'}`,
+            title: 'Search-as-Code (Python Script)',
+            type: 'terminal',
+            output: data.code ? `\`\`\`python\n${data.code}\n\`\`\`` : 'Đang khởi tạo mã lệnh truy vấn...',
+            status: isDone ? 'ok' : 'running',
+          })
+          return
+        }
+
+        // 5. Sandbox Execution Output Event
+        if (eventName === 'agent.sandbox_output' || eventName === 'agent.executing') {
+          const stdoutText = data.stdout ? `STDOUT:\n${data.stdout}` : ''
+          const stderrText = data.stderr ? `STDERR:\n${data.stderr}` : ''
+          const combinedOutput = [stdoutText, stderrText].filter(Boolean).join('\n\n') || 'Thực thi thành công (Exit Code 0)'
+          const exitCode = data.exit_code ?? 0
+          const dur = data.duration_ms ? ` (${data.duration_ms}ms)` : ''
+
+          callbacks.onStepUpdate?.({
+            id: `step-exec-${data.message_id || 'exec'}`,
+            title: `Thực thi Sandbox${dur}`,
+            type: 'terminal',
+            output: combinedOutput,
+            status: exitCode === 0 ? 'ok' : 'error',
+          })
+          return
+        }
+
+        // 6. Debugging / Self-Correction Event
+        if (eventName === 'agent.debugging' || eventName === 'agent.validating_citations') {
+          const retryCount = data.retry_count || 1
+          const errMsg = data.error || 'Đối soát trích dẫn...'
+          callbacks.onThinkingChunk?.(`\n[Đối soát chất lượng #${retryCount}]: ${errMsg}\n`)
+          return
+        }
+
+        // 7. Produced Files Event
+        if (eventName === 'agent.produced_files' || data.produced_files) {
+          const files = data.files || data.produced_files || []
+          callbacks.onProducedFiles?.(files)
+          return
+        }
+
+        // 8. Token Streaming: message.delta or delta
+        if (eventName === 'message.delta' || eventName === 'delta' || (!eventName && data.content && !data.citations)) {
+          const contentDelta: string = data.content ?? data.choices?.[0]?.delta?.content ?? ''
+
+          if (contentDelta) {
+            if (contentDelta.includes('<think>')) {
+              inThinkTag = true
+              const parts = contentDelta.split('<think>')
+              if (parts[0]) callbacks.onContentChunk?.(parts[0])
+              if (parts[1]) callbacks.onThinkingChunk?.(parts[1])
+            } else if (contentDelta.includes('</think>')) {
+              inThinkTag = false
+              const parts = contentDelta.split('</think>')
+              if (parts[0]) callbacks.onThinkingChunk?.(parts[0])
+              callbacks.onThinkingDone?.()
+              if (parts[1]) callbacks.onContentChunk?.(parts[1])
+            } else if (inThinkTag) {
+              callbacks.onThinkingChunk?.(contentDelta)
+            } else {
+              callbacks.onContentChunk?.(contentDelta)
+            }
+          } else if (data.choices?.[0]?.delta?.reasoning_content) {
+            callbacks.onThinkingChunk?.(data.choices[0].delta.reasoning_content)
+          }
+          return
+        }
+
+        // 9. Completion Event: message.done
+        if (eventName === 'message.done' || data.event === 'message.done' || (data.content && data.citations !== undefined)) {
+          callbacks.onThinkingDone?.()
+          
+          const stats: MessageStats = {
+            durationMs: data.duration_ms,
+            tokens: data.prompt_tokens && data.completion_tokens
+              ? data.prompt_tokens + data.completion_tokens
+              : data.total_tokens || 0,
+            tps: data.tps,
+          }
+
+          const rawCitations = data.citations || []
+          const mappedCitations: CitationSource[] = rawCitations.map((c: any, idx: number) => ({
+            index: idx + 1,
+            documentId: c.document_id || c.id || '',
+            fileName: c.title || c.file_name || `Nguồn [${idx + 1}]`,
+            pageNumber: c.page_number || c.metadata?.page_number,
+            score: c.score,
+            snippet: c.content || c.snippet || '',
+          }))
+
+          callbacks.onDone?.(stats, mappedCitations, data.content)
+          return
+        }
+
+        // Fallback for OpenAI direct stream
+        if (data.choices?.[0]?.delta?.content) {
+          callbacks.onContentChunk?.(data.choices[0].delta.content)
+        } else if (data.content) {
+          callbacks.onContentChunk?.(data.content)
+        }
+      } catch {
+        // If string is raw text
+        callbacks.onContentChunk?.(dataStr)
+      }
+    }
 
     while (true) {
       const { done, value } = await reader.read()
@@ -720,52 +898,28 @@ export async function streamChatMessage(
 
       for (const line of lines) {
         const trimmed = line.trim()
-        if (!trimmed || trimmed.startsWith(':')) continue
-
-        if (trimmed.startsWith('data: ')) {
-          const dataStr = trimmed.slice(6)
-          if (dataStr === '[DONE]') {
-            callbacks.onDone?.()
-            return
+        if (!trimmed) {
+          if (currentDataStr) {
+            processSseFrame(currentEventName, currentDataStr)
           }
+          currentEventName = ''
+          currentDataStr = ''
+          continue
+        }
 
-          try {
-            const data = JSON.parse(dataStr)
+        if (trimmed.startsWith(':')) continue
 
-            // Server-Sent Events from SaC / LangGraph or OpenAI provider
-            if (data.choices?.[0]?.delta?.reasoning_content) {
-              callbacks.onThinkingChunk?.(data.choices[0].delta.reasoning_content)
-            } else if (data.choices?.[0]?.delta?.content) {
-              const contentDelta: string = data.choices[0].delta.content
-
-              if (contentDelta.includes('<think>')) {
-                inThinkTag = true
-                const parts = contentDelta.split('<think>')
-                if (parts[0]) callbacks.onContentChunk?.(parts[0])
-                if (parts[1]) callbacks.onThinkingChunk?.(parts[1])
-              } else if (contentDelta.includes('</think>')) {
-                inThinkTag = false
-                const parts = contentDelta.split('</think>')
-                if (parts[0]) callbacks.onThinkingChunk?.(parts[0])
-                callbacks.onThinkingDone?.()
-                if (parts[1]) callbacks.onContentChunk?.(parts[1])
-              } else if (inThinkTag) {
-                callbacks.onThinkingChunk?.(contentDelta)
-              } else {
-                callbacks.onContentChunk?.(contentDelta)
-              }
-            } else if (data.event === 'step' || data.type === 'step') {
-              callbacks.onStepUpdate?.(data.data || data)
-            } else if (data.event === 'thinking') {
-              callbacks.onThinkingChunk?.(data.content || '')
-            } else if (data.event === 'content' || data.content) {
-              callbacks.onContentChunk?.(data.content)
-            }
-          } catch {
-            callbacks.onContentChunk?.(dataStr)
-          }
+        if (trimmed.startsWith('event:')) {
+          currentEventName = trimmed.slice(6).trim()
+        } else if (trimmed.startsWith('data:')) {
+          const d = trimmed.slice(5).trim()
+          currentDataStr = currentDataStr ? `${currentDataStr}\n${d}` : d
         }
       }
+    }
+
+    if (currentDataStr) {
+      processSseFrame(currentEventName, currentDataStr)
     }
 
     callbacks.onDone?.()
