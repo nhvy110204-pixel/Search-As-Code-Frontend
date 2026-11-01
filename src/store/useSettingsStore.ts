@@ -34,14 +34,35 @@ export const OFFICIAL_PRESETS: AgentPreset[] = [
 
 interface SettingsStore extends AppSettings {
   isSettingsOpen: boolean
-  activeSettingsTab: 'general' | 'models' | 'presets' | 'plugins'
+  activeSettingsTab: string
   presets: AgentPreset[]
   selectedPresetId: string
 
   // Actions
-  openSettings: (tab?: 'general' | 'models' | 'presets' | 'plugins') => void
+  openSettings: (tab?: string) => void
   closeSettings: () => void
-  setTab: (tab: 'general' | 'models' | 'presets' | 'plugins') => void
+  setSettingsTab: (tab: string) => void
+  setTab: (tab: string) => void
+
+  // Backward compatibility aliases
+  isNewSettingsOpen?: boolean
+  activeNewSettingsTab?: string
+  openNewSettings: (tab?: string) => void
+  closeNewSettings: () => void
+  setNewSettingsTab: (tab: string) => void
+
+  isHybridSettingsOpen?: boolean
+  activeHybridTab?: string
+  openHybridSettings: (tab?: string) => void
+  closeHybridSettings: () => void
+  setHybridTab: (tab: string) => void
+
+  isNewHybridSettingsOpen?: boolean
+  activeNewHybridTab?: string
+  openNewHybridSettings: (tab?: string) => void
+  closeNewHybridSettings: () => void
+  setNewHybridTab: (tab: string) => void
+
   updateSettings: (partial: Partial<AppSettings>) => void
   setSelectedPreset: (id: string) => void
   addPreset: (preset: AgentPreset) => void
@@ -93,6 +114,12 @@ export const useSettingsStore = create<SettingsStore>((set, get) => {
     ...initial,
     isSettingsOpen: false,
     activeSettingsTab: 'general',
+    isNewSettingsOpen: false,
+    activeNewSettingsTab: 'chung',
+    isHybridSettingsOpen: false,
+    activeHybridTab: 'general',
+    isNewHybridSettingsOpen: false,
+    activeNewHybridTab: 'general',
     presets: OFFICIAL_PRESETS,
     selectedPresetId: initialPresetId,
 
@@ -103,7 +130,21 @@ export const useSettingsStore = create<SettingsStore>((set, get) => {
 
     openSettings: (tab = 'general') => set({ isSettingsOpen: true, activeSettingsTab: tab }),
     closeSettings: () => set({ isSettingsOpen: false }),
+    setSettingsTab: (tab) => set({ activeSettingsTab: tab }),
     setTab: (tab) => set({ activeSettingsTab: tab }),
+
+    // Aliases forwarding to the unified settings modal
+    openNewSettings: (tab = 'general') => set({ isSettingsOpen: true, activeSettingsTab: tab }),
+    closeNewSettings: () => set({ isSettingsOpen: false }),
+    setNewSettingsTab: (tab) => set({ activeSettingsTab: tab }),
+
+    openHybridSettings: (tab = 'general') => set({ isSettingsOpen: true, activeSettingsTab: tab }),
+    closeHybridSettings: () => set({ isSettingsOpen: false }),
+    setHybridTab: (tab) => set({ activeSettingsTab: tab }),
+
+    openNewHybridSettings: (tab = 'general') => set({ isSettingsOpen: true, activeSettingsTab: tab }),
+    closeNewHybridSettings: () => set({ isSettingsOpen: false }),
+    setNewHybridTab: (tab) => set({ activeSettingsTab: tab }),
 
     updateSettings: (partial) => {
       set((state) => {

@@ -887,3 +887,13 @@ export const IconArchiveOutline20 = ({ size = 20, className }: IconProps) => (
     <path d="M12.7962 12.5661V11.0832H7.20548V12.5661L12.7962 12.5661Z" fill="currentColor" />
   </svg>
 )
+
+/** ic_ds_logout_outline_16 */
+export const IconLogoutOutline16 = ({ size = 16, className }: IconProps) => (
+  <svg width={size} height={size} className={className} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M6 2.5H3.5C2.67157 2.5 2 3.17157 2 4V12C2 12.8284 2.67157 13.5 3.5 13.5H6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    <path d="M10.5 11.25L13.75 8L10.5 4.75" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M5.5 8H13.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+)
+

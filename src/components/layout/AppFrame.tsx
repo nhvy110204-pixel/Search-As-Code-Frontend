@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import { SidebarRoot } from '@/components/sidebar/SidebarRoot'
 import { ConversationRoot } from '@/components/conversation/ConversationRoot'
 import { ProjectsRoot } from '@/components/projects/ProjectsRoot'
-import { SettingsRoot } from '@/components/settings/SettingsRoot'
+import { SettingsModal } from '@/components/settings'
 import { LoginModal } from '@/components/auth/LoginModal'
 import { UserProfileModal } from '@/components/auth/UserProfileModal'
 import { useAuthStore } from '@/store/useAuthStore'
@@ -147,7 +147,7 @@ export function AppFrame() {
       </div>
 
       {/* Settings Modal Layer */}
-      <SettingsRoot />
+      <SettingsModal />
 
       {/* Auth Modals Layer */}
       <LoginModal />

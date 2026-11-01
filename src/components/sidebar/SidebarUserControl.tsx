@@ -2,7 +2,7 @@ import { useState } from 'react'
 import clsx from 'clsx'
 import {
   Tooltip, Menu, type MenuEntry,
-  IconSettingsOutline14, IconUserOutline16, IconRightUpOutline14
+  IconSettingsOutline14, IconUserOutline16, IconRightUpOutline14, IconSparkle16
 } from '@/components/ui'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useSettingsStore } from '@/store/useSettingsStore'
@@ -69,7 +69,7 @@ export function SidebarUserControl({ wide }: SidebarUserControlProps) {
     },
     {
       id: 'settings',
-      label: 'Cài đặt ',
+      label: 'Cài đặt',
       icon: <IconSettingsOutline14 size={15} />,
     },
     {

@@ -267,3 +267,15 @@
   padding-top: 8px;
   border-top: 1px solid var(--dsw-alias-border-l1);
 }
+
+.settingsRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.collapsed .settingsRow {
+  margin-bottom: 8px;
+  gap: 4px;
+}

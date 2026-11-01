@@ -2,13 +2,14 @@ import { useState, useRef, useEffect } from 'react'
 import clsx from 'clsx'
 import {
   BrandWordmark, FishLogo, IconNewChatOutline16, IconPanelLeftOutline16,
-  IconFolderClose16, IconFolderOpen16, Tooltip
+  IconFolderClose16, IconFolderOpen16, IconSettingsOutline16, IconSparkle16, Tooltip
 } from '@/components/ui'
 import { WorkspaceBrowser } from '@/components/workspace/WorkspaceBrowser'
 import { SidebarUserControl } from './SidebarUserControl'
 import { useChatStore } from '@/store/useChatStore'
 import { useProjectStore } from '@/store/useProjectStore'
 import { useViewStore } from '@/store/useViewStore'
+import { useSettingsStore } from '@/store/useSettingsStore'
 import css from './SidebarRoot.module.css'
 
 export interface SidebarRootProps {
@@ -25,6 +26,7 @@ export function SidebarRoot({
   const { newSession } = useChatStore()
   const { getActiveProject, fetchProjects } = useProjectStore()
   const { currentView, navigateToProjects, navigateToChat } = useViewStore()
+  const { openSettings } = useSettingsStore()
 
   const [settled, setSettled] = useState(collapsed)
 
@@ -124,8 +126,24 @@ export function SidebarRoot({
         <WorkspaceBrowser wide={wide} />
       </div>
 
-      {/* 5. Foot Area (User Profile & Context Menu) */}
+      {/* 5. Foot Area (Settings Old/New & User Profile) */}
       <div className={css.footArea}>
+        <div className={css.settingsRow}>
+          <Tooltip label="Cài đặt" delayMs={400} disabled={wide}>
+            <button
+              type="button"
+              className={css.navItem}
+              aria-label="Cài đặt"
+              onClick={() => openSettings('general')}
+            >
+              <span className={css.navIconSlot}>
+                <IconSettingsOutline16 size={17} />
+              </span>
+              {wide && <span className={css.navLabel}>Cài đặt</span>}
+            </button>
+          </Tooltip>
+        </div>
+
         <SidebarUserControl wide={wide} />
       </div>
     </div>
